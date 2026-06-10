@@ -22,5 +22,6 @@
 ## 注意事项
 
 - API Key 只保存在浏览器本地 `localStorage`,不会写入代码文件。
-- 如果浏览器调用接口时出现 CORS 错误,需要增加一个后端代理或 Cloudflare Worker 转发请求。
+- 浏览器直连生图请使用 `https://token.sensenova.cn/v1`。`https://api.sensenova.cn/v1` 在 GitHub Pages 这类静态网页里可能出现 CORS/404 问题。
+- 如果默认地址仍然失败,需要增加一个后端代理或 Cloudflare Worker 转发请求。
 - 不要把自己的 API Key 写进 `index.html` 后提交到 GitHub。
