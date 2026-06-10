@@ -301,7 +301,7 @@
       <div class="brand-tag">Image Studio · 公测期免费</div>
     </div>
     <div class="top-meta">
-      <span><span class="dot"></span>token.sensenova.cn / v1</span>
+      <span><span class="dot"></span>api.sensenova.cn / v1</span>
       <span>2026 · 06</span>
     </div>
   </header>
@@ -336,7 +336,11 @@
       </div>
       <div class="field">
         <label>Base URL</label>
-        <input id="baseUrl" class="input" value="https://token.sensenova.cn/v1" />
+        <input id="baseUrl" class="input" value="https://api.sensenova.cn/v1" />
+        <div class="help">
+          文生图默认使用 `api.sensenova.cn/v1`；如果你的 Key 属于免费 Token 计划,可手动改回
+          <code>https://token.sensenova.cn/v1</code> 试试
+        </div>
       </div>
 
       <div style="height:18px;border-top:1px dashed var(--line);margin:6px 0 22px"></div>
@@ -441,7 +445,9 @@
   // restore
   try{
     apiKeyEl.value = localStorage.getItem('sn_api_key') || '';
-    const savedBase = localStorage.getItem('sn_base_url'); if(savedBase) baseUrlEl.value = savedBase;
+    const savedBase = localStorage.getItem('sn_base_url');
+    if(savedBase && savedBase !== 'https://token.sensenova.cn/v1') baseUrlEl.value = savedBase;
+    if(savedBase === 'https://token.sensenova.cn/v1') localStorage.setItem('sn_base_url', 'https://api.sensenova.cn/v1');
     const savedRun = parseInt(localStorage.getItem('sn_run_count')||'0',10);
     runCount.textContent = String(savedRun).padStart(3,'0');
   }catch(e){}
