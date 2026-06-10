@@ -301,7 +301,7 @@
       <div class="brand-tag">Image Studio · 公测期免费</div>
     </div>
     <div class="top-meta">
-      <span><span class="dot"></span>api.sensenova.cn / v1</span>
+      <span><span class="dot"></span>token.sensenova.cn / v1</span>
       <span>2026 · 06</span>
     </div>
   </header>
@@ -336,10 +336,10 @@
       </div>
       <div class="field">
         <label>Base URL</label>
-        <input id="baseUrl" class="input" value="https://api.sensenova.cn/v1" />
+        <input id="baseUrl" class="input" value="https://token.sensenova.cn/v1" />
         <div class="help">
-          文生图默认使用 `api.sensenova.cn/v1`；如果你的 Key 属于免费 Token 计划,可手动改回
-          <code>https://token.sensenova.cn/v1</code> 试试
+          浏览器直连生图请使用 <code>https://token.sensenova.cn/v1</code>。
+          <code>api.sensenova.cn/v1</code> 不适合 GitHub Pages 静态页直连
         </div>
       </div>
 
@@ -446,10 +446,10 @@
   try{
     apiKeyEl.value = localStorage.getItem('sn_api_key') || '';
     const savedBase = localStorage.getItem('sn_base_url');
-    if(savedBase && savedBase !== 'https://token.sensenova.cn/v1') baseUrlEl.value = savedBase;
-    if(savedBase === 'https://token.sensenova.cn/v1') {
-      baseUrlEl.value = 'https://api.sensenova.cn/v1';
-      localStorage.setItem('sn_base_url', 'https://api.sensenova.cn/v1');
+    if(savedBase && savedBase !== 'https://api.sensenova.cn/v1') baseUrlEl.value = savedBase;
+    if(savedBase === 'https://api.sensenova.cn/v1') {
+      baseUrlEl.value = 'https://token.sensenova.cn/v1';
+      localStorage.setItem('sn_base_url', 'https://token.sensenova.cn/v1');
     }
     const savedRun = parseInt(localStorage.getItem('sn_run_count')||'0',10);
     runCount.textContent = String(savedRun).padStart(3,'0');
@@ -587,7 +587,13 @@
 
       if(!resp.ok){
         const m = (data && (data.error?.message || data.message)) || (data.raw||'').slice(0,300) || ('HTTP '+resp.status);
-        throw new Error(m);
+        if(resp.status === 401 || /Forbidden/i.test(m)){
+          throw new Error('鉴权失败: Key 无效、未开通 SenseNova Token 计划,或当前 Key 没有 `sensenova-u1-fast` 生图权限。原始返回: ' + m);
+        }
+        if(resp.status === 404){
+          throw new Error('接口路径不可用: 请确认 Base URL 是 `https://token.sensenova.cn/v1`,不要使用 `api.sensenova.cn/v1` 直连。原始返回: ' + m);
+        }
+        throw new Error('HTTP ' + resp.status + ': ' + m);
       }
 
       const list = (data.data||[]).map(d=> d.url || d.b64_json).filter(Boolean);
@@ -617,7 +623,12 @@
           <p>查看下方错误详情,确认 Key、模型、网络访问权限后重试。</p>
         </div>
       `;
-      showError(err.message || String(err));
+      const message = err.message || String(err);
+      if(/Failed to fetch/i.test(message)){
+        showError('网络请求失败: 通常是 CORS 或接口域名不支持浏览器直连。请确认 Base URL 为 `https://token.sensenova.cn/v1`；如果仍失败,就需要后端代理。');
+      }else{
+        showError(message);
+      }
     }finally{
       clearInterval(timer);
       goBtn.disabled = false;
