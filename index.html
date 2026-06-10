@@ -1,0 +1,626 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>SenseNova · Image Studio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,700;1,9..144,400&family=JetBrains+Mono:wght@300;400;500;700&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet" />
+<style>
+  /* =================  TOKENS  ================= */
+  :root{
+    --bg:#0a0a0c;
+    --bg-1:#101015;
+    --bg-2:#15151c;
+    --line:rgba(255,255,255,.08);
+    --line-strong:rgba(255,255,255,.18);
+    --ink:#f4f1ea;
+    --ink-dim:#a8a39a;
+    --ink-mute:#67635c;
+    --accent:#ff5b1f;          /* sensenova orange-red */
+    --accent-2:#ffd24a;         /* warm yellow */
+    --accent-3:#7cf2c9;         /* mint */
+    --grid:rgba(255,255,255,.04);
+    --shadow: 0 30px 80px -20px rgba(0,0,0,.6), 0 8px 20px -6px rgba(0,0,0,.5);
+    --serif:'Fraunces','Noto Sans SC',serif;
+    --mono:'JetBrains Mono',ui-monospace,monospace;
+    --sans:'Noto Sans SC',-apple-system,system-ui,sans-serif;
+  }
+
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:var(--sans);-webkit-font-smoothing:antialiased}
+  body{
+    min-height:100vh;
+    background:
+      radial-gradient(1200px 600px at 80% -10%, rgba(255,91,31,.12), transparent 60%),
+      radial-gradient(900px 500px at -10% 110%, rgba(124,242,201,.08), transparent 60%),
+      linear-gradient(180deg,#0a0a0c 0%, #07070a 100%);
+    background-attachment: fixed;
+  }
+  body::before{
+    content:"";
+    position:fixed;inset:0;
+    background-image:
+      linear-gradient(var(--grid) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+    background-size: 56px 56px;
+    pointer-events:none;
+    mask-image: radial-gradient(ellipse 80% 60% at 50% 40%, black 30%, transparent 80%);
+    z-index:0;
+  }
+  body::after{
+    /* film grain */
+    content:"";
+    position:fixed;inset:0;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.06 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+    pointer-events:none;
+    opacity:.5;
+    mix-blend-mode:overlay;
+    z-index:1;
+  }
+
+  .wrap{position:relative;z-index:2;max-width:1440px;margin:0 auto;padding:28px 36px 80px}
+
+  /* =================  TOPBAR  ================= */
+  .topbar{display:flex;align-items:center;justify-content:space-between;padding-bottom:18px;border-bottom:1px solid var(--line)}
+  .brand{display:flex;align-items:center;gap:14px}
+  .brand-mark{
+    width:38px;height:38px;border-radius:10px;
+    background: conic-gradient(from 220deg at 50% 50%, #ff5b1f, #ffd24a, #ff5b1f);
+    display:grid;place-items:center;
+    box-shadow: 0 0 0 1px rgba(255,255,255,.1) inset, 0 10px 30px -10px rgba(255,91,31,.6);
+    position:relative;
+  }
+  .brand-mark::after{
+    content:"";position:absolute;inset:6px;border-radius:6px;background:#0a0a0c;
+  }
+  .brand-mark span{position:relative;z-index:1;font-family:var(--serif);font-style:italic;font-weight:700;color:#ffd24a;font-size:18px}
+  .brand-name{font-family:var(--serif);font-size:22px;letter-spacing:.5px}
+  .brand-name em{color:var(--accent);font-style:italic;font-weight:500}
+  .brand-tag{font-family:var(--mono);font-size:11px;color:var(--ink-mute);letter-spacing:.18em;text-transform:uppercase;margin-left:14px;padding-left:14px;border-left:1px solid var(--line)}
+  .top-meta{display:flex;align-items:center;gap:22px;font-family:var(--mono);font-size:11px;color:var(--ink-mute);letter-spacing:.14em}
+  .dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--accent-3);box-shadow:0 0 10px var(--accent-3);margin-right:8px;animation:pulse 2.4s infinite ease-in-out}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+  /* =================  HERO  ================= */
+  .hero{padding:46px 0 28px;display:grid;grid-template-columns:1.3fr 1fr;gap:40px;align-items:end;border-bottom:1px solid var(--line)}
+  .hero h1{
+    font-family:var(--serif);
+    font-weight:300;
+    font-size: clamp(48px, 6.4vw, 96px);
+    line-height:.95;
+    letter-spacing:-.02em;
+    margin:0;
+  }
+  .hero h1 .it{font-style:italic;font-weight:500;color:var(--accent)}
+  .hero h1 .sm{display:block;font-size:.32em;letter-spacing:.4em;color:var(--ink-mute);font-style:normal;font-weight:400;margin-top:18px;font-family:var(--mono);text-transform:uppercase}
+  .hero-side{font-size:14px;line-height:1.7;color:var(--ink-dim);max-width:380px;justify-self:end}
+  .hero-side b{color:var(--ink);font-weight:500}
+  .hero-side .num{font-family:var(--mono);color:var(--accent-2)}
+
+  /* =================  STUDIO  ================= */
+  .studio{display:grid;grid-template-columns:380px 1fr;gap:0;margin-top:32px;border:1px solid var(--line);border-radius:18px;overflow:hidden;background:linear-gradient(180deg, rgba(20,20,26,.7), rgba(10,10,14,.7));backdrop-filter: blur(8px)}
+  .panel{padding:28px;border-right:1px solid var(--line);background:rgba(0,0,0,.2)}
+  .panel h3{font-family:var(--mono);font-size:11px;font-weight:500;letter-spacing:.22em;color:var(--ink-mute);text-transform:uppercase;margin:0 0 14px;display:flex;align-items:center;justify-content:space-between}
+  .panel h3 .idx{color:var(--accent)}
+  .panel + .panel{border-top:1px solid var(--line)}
+
+  .field{margin-bottom:22px}
+  .field label{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.2em;color:var(--ink-mute);text-transform:uppercase;margin-bottom:8px}
+  .input, .textarea, .select{
+    width:100%;
+    background:rgba(255,255,255,.03);
+    border:1px solid var(--line);
+    color:var(--ink);
+    padding:11px 14px;
+    border-radius:8px;
+    font-family:var(--mono);
+    font-size:13px;
+    line-height:1.5;
+    transition: all .25s ease;
+    outline:none;
+  }
+  .textarea{font-family:var(--sans);font-size:14px;line-height:1.65;min-height:120px;resize:vertical}
+  .input:focus,.textarea:focus,.select:focus{border-color:var(--accent);background:rgba(255,91,31,.05);box-shadow: 0 0 0 3px rgba(255,91,31,.12)}
+  .input::placeholder, .textarea::placeholder{color:var(--ink-mute)}
+
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+
+  .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+  .chip{
+    font-family:var(--mono);font-size:10px;letter-spacing:.1em;
+    padding:5px 9px;border:1px solid var(--line);border-radius:999px;
+    color:var(--ink-dim);cursor:pointer;background:transparent;
+    transition: all .2s;
+  }
+  .chip:hover{color:var(--accent);border-color:var(--accent)}
+  .chip.active{background:var(--accent);color:#0a0a0c;border-color:var(--accent)}
+
+  .seg{display:flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+  .seg button{
+    flex:1;background:transparent;border:0;border-right:1px solid var(--line);
+    color:var(--ink-dim);font-family:var(--mono);font-size:11px;letter-spacing:.12em;
+    padding:10px 4px;cursor:pointer;transition:all .2s;
+  }
+  .seg button:last-child{border-right:0}
+  .seg button:hover{color:var(--ink)}
+  .seg button.on{background:var(--ink);color:#0a0a0c;font-weight:600}
+
+  .submit{
+    margin-top:8px;
+    width:100%;display:flex;align-items:center;justify-content:space-between;gap:10px;
+    background:var(--accent);color:#0a0a0c;border:0;
+    padding:18px 22px;border-radius:12px;
+    font-family:var(--serif);font-style:italic;font-size:22px;font-weight:500;
+    cursor:pointer;transition: all .25s;letter-spacing:-.01em;
+    box-shadow: 0 16px 40px -12px rgba(255,91,31,.5);
+  }
+  .submit:hover{transform:translateY(-2px);box-shadow:0 22px 50px -10px rgba(255,91,31,.65)}
+  .submit:disabled{opacity:.5;cursor:not-allowed;transform:none}
+  .submit svg{width:22px;height:22px}
+
+  .help{font-family:var(--mono);font-size:10px;color:var(--ink-mute);line-height:1.6;margin-top:6px;letter-spacing:.04em}
+  .help a{color:var(--accent-2);text-decoration:none;border-bottom:1px dashed var(--accent-2)}
+
+  /* =================  CANVAS  ================= */
+  .canvas{padding:28px;display:flex;flex-direction:column;min-height:680px}
+  .canvas-head{display:flex;justify-content:space-between;align-items:center;padding-bottom:18px;border-bottom:1px solid var(--line)}
+  .canvas-head h3{margin:0;font-family:var(--mono);font-size:11px;letter-spacing:.22em;color:var(--ink-mute);text-transform:uppercase}
+  .canvas-head .count{font-family:var(--mono);font-size:11px;color:var(--ink-dim)}
+  .canvas-head .count b{color:var(--accent-2)}
+
+  .canvas-body{flex:1;padding:24px 0;display:flex;flex-direction:column}
+
+  /* empty state */
+  .empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:40px 20px;position:relative}
+  .empty-art{
+    width:280px;height:280px;position:relative;
+  }
+  .empty-art .ring{position:absolute;inset:0;border:1px dashed var(--line-strong);border-radius:50%;animation:rot 30s linear infinite}
+  .empty-art .ring.r2{inset:36px;border-style:solid;border-color:var(--line);animation-duration:18s;animation-direction:reverse}
+  .empty-art .ring.r3{inset:80px;border-color:var(--accent);opacity:.3}
+  .empty-art .core{
+    position:absolute;inset:110px;border-radius:50%;
+    background: conic-gradient(from 0deg, var(--accent), var(--accent-2), var(--accent-3), var(--accent));
+    filter:blur(14px);opacity:.7;animation:pulse2 4s ease-in-out infinite;
+  }
+  .empty-art .core2{
+    position:absolute;inset:120px;border-radius:50%;
+    background:#0a0a0c;
+    box-shadow: 0 0 30px rgba(255,91,31,.5);
+  }
+  .empty-art .label{
+    position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+    font-family:var(--mono);font-size:10px;letter-spacing:.3em;color:var(--ink-mute);
+  }
+  @keyframes rot{to{transform:rotate(360deg)}}
+  @keyframes pulse2{0%,100%{opacity:.6}50%{opacity:1}}
+  .empty h2{font-family:var(--serif);font-style:italic;font-weight:400;font-size:32px;margin:24px 0 8px;color:var(--ink)}
+  .empty p{font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-mute);max-width:420px}
+
+  /* loading */
+  .loading{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px}
+  .scanlines{
+    width:100%;max-width:520px;aspect-ratio:1;border:1px solid var(--accent);border-radius:14px;position:relative;overflow:hidden;
+    background: linear-gradient(180deg, rgba(255,91,31,.02), rgba(0,0,0,.6));
+  }
+  .scanlines::before{
+    content:"";position:absolute;left:0;right:0;height:2px;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    animation: scan 2.2s ease-in-out infinite;
+    box-shadow: 0 0 24px var(--accent);
+  }
+  @keyframes scan{0%{top:0}50%{top:calc(100% - 2px)}100%{top:0}}
+  .scanlines .meta{position:absolute;bottom:14px;left:18px;right:18px;display:flex;justify-content:space-between;font-family:var(--mono);font-size:10px;color:var(--ink-dim);letter-spacing:.16em}
+  .scanlines .ascii{position:absolute;top:14px;left:18px;font-family:var(--mono);font-size:10px;color:var(--accent);letter-spacing:.04em;line-height:1.5;opacity:.7}
+  .ldot{display:inline-block;width:6px;height:6px;background:var(--accent);border-radius:50%;margin:0 3px;animation:ldot 1.4s infinite}
+  .ldot:nth-child(2){animation-delay:.2s}
+  .ldot:nth-child(3){animation-delay:.4s}
+  @keyframes ldot{0%,80%,100%{opacity:.2;transform:translateY(0)}40%{opacity:1;transform:translateY(-4px)}}
+
+  /* result grid */
+  .results{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:18px}
+  .card{
+    border:1px solid var(--line);border-radius:14px;overflow:hidden;
+    background:#000;position:relative;
+    transition:all .35s cubic-bezier(.2,.7,.2,1);
+    animation: slideIn .6s cubic-bezier(.2,.7,.2,1) backwards;
+  }
+  .card:nth-child(2){animation-delay:.08s}
+  .card:nth-child(3){animation-delay:.16s}
+  .card:nth-child(4){animation-delay:.24s}
+  @keyframes slideIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
+  .card:hover{border-color:var(--accent);transform:translateY(-4px)}
+  .card img{display:block;width:100%;height:auto;aspect-ratio:1;object-fit:cover}
+  .card .meta{
+    position:absolute;left:0;right:0;bottom:0;padding:14px 16px;
+    background:linear-gradient(0deg, rgba(0,0,0,.85), transparent);
+    display:flex;justify-content:space-between;align-items:end;gap:10px;
+    transform:translateY(8px);opacity:0;transition:all .3s;
+  }
+  .card:hover .meta{transform:none;opacity:1}
+  .card .idx{font-family:var(--serif);font-style:italic;font-size:28px;line-height:1;color:var(--accent-2)}
+  .card .actions{display:flex;gap:8px}
+  .card .iconbtn{
+    width:34px;height:34px;border-radius:8px;border:1px solid var(--line-strong);
+    background:rgba(255,255,255,.08);backdrop-filter:blur(6px);
+    color:var(--ink);display:grid;place-items:center;cursor:pointer;
+    text-decoration:none;transition:all .2s;
+  }
+  .card .iconbtn:hover{background:var(--accent);color:#0a0a0c;border-color:var(--accent)}
+  .card .iconbtn svg{width:16px;height:16px}
+
+  /* error */
+  .error{
+    margin-top:14px;padding:14px 16px;border-radius:10px;
+    border:1px solid rgba(255,91,31,.4);background:rgba(255,91,31,.08);
+    font-family:var(--mono);font-size:12px;color:#ffb799;line-height:1.6;
+    display:none;
+  }
+  .error.on{display:block;animation:slideIn .3s}
+  .error b{color:var(--accent);font-weight:500}
+
+  /* prompt log */
+  .log{
+    margin-top:24px;padding-top:20px;border-top:1px solid var(--line);
+    font-family:var(--mono);font-size:11px;color:var(--ink-mute);line-height:1.7;
+    display:flex;gap:14px;flex-wrap:wrap;align-items:flex-start;
+  }
+  .log .k{color:var(--ink-dim);min-width:80px}
+  .log .v{color:var(--ink);flex:1;word-break:break-word}
+  .log .v.prompt{color:var(--accent-2);font-family:var(--serif);font-style:italic;font-size:14px;line-height:1.5}
+
+  /* =================  FOOTER  ================= */
+  .foot{margin-top:48px;display:flex;justify-content:space-between;align-items:center;font-family:var(--mono);font-size:10px;color:var(--ink-mute);letter-spacing:.18em;text-transform:uppercase;padding-top:24px;border-top:1px solid var(--line)}
+  .foot a{color:var(--ink-dim);text-decoration:none}
+  .foot a:hover{color:var(--accent)}
+
+  /* responsive */
+  @media (max-width: 1080px){
+    .hero{grid-template-columns:1fr;gap:24px}
+    .hero-side{justify-self:start}
+    .studio{grid-template-columns:1fr}
+    .panel{border-right:0;border-bottom:1px solid var(--line)}
+  }
+  @media (max-width: 640px){
+    .wrap{padding:18px}
+    .top-meta{display:none}
+    .brand-tag{display:none}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- TOPBAR -->
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark"><span>S</span></div>
+      <div class="brand-name">Sense<em>Nova</em></div>
+      <div class="brand-tag">Image Studio · 公测期免费</div>
+    </div>
+    <div class="top-meta">
+      <span><span class="dot"></span>token.sensenova.cn / v1</span>
+      <span>2026 · 06</span>
+    </div>
+  </header>
+
+  <!-- HERO -->
+  <section class="hero">
+    <h1>
+      画一张<span class="it">从未</span>存在<br/>的画面。
+      <span class="sm">Text-to-Image · OpenAI Compatible · sensenova-u1-fast</span>
+    </h1>
+    <aside class="hero-side">
+      调用商汤 <b>SenseNova</b> 公测期免费 Token 接口,直接在浏览器里生成图像。所有请求都从你当前页面发出,
+      <b>API Key 仅保存在本地浏览器</b>,不会上传到任何第三方服务器。
+      免费额度:每模型 <span class="num">1500</span> 次 / 5h,Key 上限 <span class="num">20</span> 个。
+    </aside>
+  </section>
+
+  <!-- STUDIO -->
+  <section class="studio">
+
+    <!-- LEFT PANEL -->
+    <aside class="panel" style="display:flex;flex-direction:column">
+
+      <h3><span>01 · 凭证</span><span class="idx">/ AUTH</span></h3>
+      <div class="field">
+        <label>API Key</label>
+        <input id="apiKey" class="input" type="password" placeholder="sk-xxxxxxxxxxxxxxxxxxxx" autocomplete="off" />
+        <div class="help">
+          在 <a href="https://platform.sensenova.cn/login" target="_blank" rel="noopener">platform.sensenova.cn</a> 控制台创建 ·
+          仅保存在 localStorage
+        </div>
+      </div>
+      <div class="field">
+        <label>Base URL</label>
+        <input id="baseUrl" class="input" value="https://token.sensenova.cn/v1" />
+      </div>
+
+      <div style="height:18px;border-top:1px dashed var(--line);margin:6px 0 22px"></div>
+
+      <h3><span>02 · 提示词</span><span class="idx">/ PROMPT</span></h3>
+      <div class="field">
+        <label>Prompt</label>
+        <textarea id="prompt" class="textarea" placeholder="一只金色凤凰在日出时穿越云海,东方水墨与赛博朋克霓虹的融合,细节丰富,电影级光照"></textarea>
+        <div class="chips" id="presetChips">
+          <button class="chip" data-p="一只金色凤凰在日出时穿越云海,东方水墨与赛博朋克霓虹融合,细节丰富,电影级光照">凤凰 · 水墨</button>
+          <button class="chip" data-p="未来主义都市夜景,雨后湿润街道,霓虹倒影,广角镜头,胶片颗粒,Wong Kar-wai 风格">赛博都市</button>
+          <button class="chip" data-p="极简静物,陶瓷茶器与一支白色梨花,柔和侧光,大面积留白,杂志摄影,4:5">极简静物</button>
+          <button class="chip" data-p="星空下的雪山湖泊,银河倒映在镜面湖水上,长曝光,National Geographic 风格">银河雪山</button>
+          <button class="chip" data-p="复古宇航员漂浮在粉色星云中,80年代海报美学,印刷网点,胶片质感">复古宇航</button>
+        </div>
+      </div>
+
+      <h3><span>03 · 参数</span><span class="idx">/ PARAMS</span></h3>
+
+      <div class="field">
+        <label>模型</label>
+        <select id="model" class="select">
+          <option value="sensenova-u1-fast">sensenova-u1-fast (推荐 · 多模态原生)</option>
+          <option value="sensenova-6.7-flash-lite">sensenova-6.7-flash-lite</option>
+        </select>
+      </div>
+
+      <div class="row">
+        <div class="field">
+          <label>尺寸</label>
+          <select id="size" class="select">
+            <option value="1024x1024">1024 × 1024 · 方形</option>
+            <option value="1024x1536">1024 × 1536 · 竖版 2:3</option>
+            <option value="1536x1024">1536 × 1024 · 横版 3:2</option>
+            <option value="768x1024">768 × 1024 · 4:3</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>张数 · n</label>
+          <div class="seg" id="nSeg">
+            <button data-n="1" class="on">1</button>
+            <button data-n="2">2</button>
+            <button data-n="4">4</button>
+          </div>
+        </div>
+      </div>
+
+      <button id="go" class="submit" type="button">
+        <span>开始生成</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m13 5 7 7-7 7"/></svg>
+      </button>
+      <div class="error" id="err"></div>
+    </aside>
+
+    <!-- RIGHT CANVAS -->
+    <main class="canvas">
+      <div class="canvas-head">
+        <h3>// CANVAS · 生成结果</h3>
+        <div class="count">RUN <b id="runCount">000</b> · ELAPSED <b id="elapsed">--</b></div>
+      </div>
+
+      <div class="canvas-body" id="canvasBody">
+        <div class="empty" id="emptyState">
+          <div class="empty-art">
+            <div class="ring"></div>
+            <div class="ring r2"></div>
+            <div class="ring r3"></div>
+            <div class="core"></div>
+            <div class="core2"></div>
+            <div class="label">IDLE</div>
+          </div>
+          <h2>等待你的 第一道光。</h2>
+          <p>填好 API Key、写一段提示词,然后按下生成。</p>
+        </div>
+      </div>
+    </main>
+  </section>
+
+  <footer class="foot">
+    <span>SENSENOVA · IMAGE STUDIO</span>
+    <span>BASE URL · TOKEN.SENSENOVA.CN/V1</span>
+    <span>BUILT 2026 · <a href="https://platform.sensenova.cn/login" target="_blank">GET API KEY →</a></span>
+  </footer>
+
+</div>
+
+<script>
+(function(){
+  const $ = (s)=>document.querySelector(s);
+  const apiKeyEl = $('#apiKey');
+  const baseUrlEl = $('#baseUrl');
+  const promptEl = $('#prompt');
+  const modelEl = $('#model');
+  const sizeEl = $('#size');
+  const nSeg = $('#nSeg');
+  const goBtn = $('#go');
+  const errBox = $('#err');
+  const canvasBody = $('#canvasBody');
+  const runCount = $('#runCount');
+  const elapsedEl = $('#elapsed');
+
+  // restore
+  try{
+    apiKeyEl.value = localStorage.getItem('sn_api_key') || '';
+    const savedBase = localStorage.getItem('sn_base_url'); if(savedBase) baseUrlEl.value = savedBase;
+    const savedRun = parseInt(localStorage.getItem('sn_run_count')||'0',10);
+    runCount.textContent = String(savedRun).padStart(3,'0');
+  }catch(e){}
+
+  apiKeyEl.addEventListener('change', ()=>{ try{localStorage.setItem('sn_api_key',apiKeyEl.value)}catch(e){} });
+  baseUrlEl.addEventListener('change', ()=>{ try{localStorage.setItem('sn_base_url',baseUrlEl.value)}catch(e){} });
+
+  // chips
+  document.querySelectorAll('#presetChips .chip').forEach(c=>{
+    c.addEventListener('click', ()=>{
+      promptEl.value = c.dataset.p;
+      document.querySelectorAll('#presetChips .chip').forEach(x=>x.classList.remove('active'));
+      c.classList.add('active');
+      promptEl.focus();
+    });
+  });
+
+  // n segment
+  let nVal = 1;
+  nSeg.querySelectorAll('button').forEach(b=>{
+    b.addEventListener('click', ()=>{
+      nSeg.querySelectorAll('button').forEach(x=>x.classList.remove('on'));
+      b.classList.add('on');
+      nVal = parseInt(b.dataset.n,10);
+    });
+  });
+
+  function showError(msg){
+    errBox.innerHTML = '<b>ERROR</b> · ' + msg;
+    errBox.classList.add('on');
+  }
+  function clearError(){ errBox.classList.remove('on'); errBox.innerHTML=''; }
+
+  function renderLoading(){
+    canvasBody.innerHTML = `
+      <div class="loading">
+        <div class="scanlines">
+          <div class="ascii">
+&gt; INIT request<br/>
+&gt; POST /v1/images/generations<br/>
+&gt; model: ${modelEl.value}<br/>
+&gt; n: ${nVal} · size: ${sizeEl.value}<br/>
+&gt; awaiting tokens<span class="ldot"></span><span class="ldot"></span><span class="ldot"></span>
+          </div>
+          <div class="meta">
+            <span>RENDERING</span>
+            <span id="lTimer">00:00</span>
+          </div>
+        </div>
+      </div>
+    `;
+    const start = Date.now();
+    return setInterval(()=>{
+      const t = Math.floor((Date.now()-start)/1000);
+      const m = String(Math.floor(t/60)).padStart(2,'0');
+      const s = String(t%60).padStart(2,'0');
+      const el = document.getElementById('lTimer');
+      if(el) el.textContent = `${m}:${s}`;
+      elapsedEl.textContent = `${t}s`;
+    },300);
+  }
+
+  function renderResults(images, meta){
+    const cards = images.map((src,i)=>{
+      const isUrl = typeof src === 'string' && /^https?:\/\//.test(src);
+      const imgSrc = isUrl ? src : ('data:image/png;base64,'+src);
+      return `
+        <div class="card" style="animation-delay:${i*80}ms">
+          <img src="${imgSrc}" alt="generation ${i+1}" loading="lazy"/>
+          <div class="meta">
+            <div class="idx">0${i+1}</div>
+            <div class="actions">
+              <a class="iconbtn" href="${imgSrc}" target="_blank" title="打开" rel="noopener">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg>
+              </a>
+              <a class="iconbtn" href="${imgSrc}" download="sensenova-${Date.now()}-${i+1}.png" title="下载">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg>
+              </a>
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    canvasBody.innerHTML = `
+      <div class="results">${cards}</div>
+      <div class="log">
+        <span class="k">// PROMPT</span>
+        <span class="v prompt">"${meta.prompt.replace(/"/g,'&quot;')}"</span>
+      </div>
+      <div class="log" style="border-top:0;padding-top:0">
+        <span class="k">// MODEL</span><span class="v">${meta.model}</span>
+        <span class="k">// SIZE</span><span class="v">${meta.size}</span>
+        <span class="k">// N</span><span class="v">${meta.n}</span>
+        <span class="k">// LATENCY</span><span class="v">${meta.elapsed}s</span>
+      </div>
+    `;
+  }
+
+  async function generate(){
+    clearError();
+    const key = apiKeyEl.value.trim();
+    const base = baseUrlEl.value.trim().replace(/\/$/,'');
+    const prompt = promptEl.value.trim();
+    if(!key){ showError('请先填写 API Key。可在 platform.sensenova.cn 控制台创建。'); apiKeyEl.focus(); return; }
+    if(!prompt){ showError('Prompt 不能为空。'); promptEl.focus(); return; }
+
+    try{ localStorage.setItem('sn_api_key', key); localStorage.setItem('sn_base_url', base); }catch(e){}
+
+    goBtn.disabled = true;
+    goBtn.querySelector('span').textContent = '生成中...';
+    const timer = renderLoading();
+    const t0 = Date.now();
+
+    try{
+      const resp = await fetch(base + '/images/generations', {
+        method: 'POST',
+        headers: {
+          'Content-Type':'application/json',
+          'Authorization':'Bearer ' + key
+        },
+        body: JSON.stringify({
+          model: modelEl.value,
+          prompt: prompt,
+          n: nVal,
+          size: sizeEl.value,
+          response_format: 'url'
+        })
+      });
+
+      const text = await resp.text();
+      let data;
+      try{ data = JSON.parse(text); }catch(_){ data = { raw:text }; }
+
+      if(!resp.ok){
+        const m = (data && (data.error?.message || data.message)) || (data.raw||'').slice(0,300) || ('HTTP '+resp.status);
+        throw new Error(m);
+      }
+
+      const list = (data.data||[]).map(d=> d.url || d.b64_json).filter(Boolean);
+      if(!list.length){ throw new Error('接口返回为空,请检查模型是否支持图像生成,或更换 size / 提示词。'); }
+
+      const elapsed = ((Date.now()-t0)/1000).toFixed(1);
+      renderResults(list, {
+        prompt, model:modelEl.value, size:sizeEl.value, n:nVal, elapsed
+      });
+
+      const cur = parseInt(localStorage.getItem('sn_run_count')||'0',10) + 1;
+      try{ localStorage.setItem('sn_run_count', String(cur)); }catch(e){}
+      runCount.textContent = String(cur).padStart(3,'0');
+
+    }catch(err){
+      canvasBody.innerHTML = '';
+      // restore empty state
+      canvasBody.innerHTML = `
+        <div class="empty">
+          <div class="empty-art">
+            <div class="ring"></div><div class="ring r2"></div><div class="ring r3" style="border-color:var(--accent)"></div>
+            <div class="core" style="background:var(--accent)"></div>
+            <div class="core2"></div>
+            <div class="label" style="color:var(--accent)">FAILED</div>
+          </div>
+          <h2>这次没能成像。</h2>
+          <p>查看下方错误详情,确认 Key、模型、网络访问权限后重试。</p>
+        </div>
+      `;
+      showError(err.message || String(err));
+    }finally{
+      clearInterval(timer);
+      goBtn.disabled = false;
+      goBtn.querySelector('span').textContent = '开始生成';
+    }
+  }
+
+  goBtn.addEventListener('click', generate);
+  promptEl.addEventListener('keydown', (e)=>{
+    if((e.metaKey||e.ctrlKey) && e.key==='Enter'){ generate(); }
+  });
+})();
+</script>
+</body>
+</html>
