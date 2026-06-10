@@ -1,653 +1,1883 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>SenseNova · Image Studio</title>
-<link rel="preconnect" href="https://fonts.googleapis.com" />
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,700;1,9..144,400&family=JetBrains+Mono:wght@300;400;500;700&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet" />
-<style>
-  /* =================  TOKENS  ================= */
-  :root{
-    --bg:#0a0a0c;
-    --bg-1:#101015;
-    --bg-2:#15151c;
-    --line:rgba(255,255,255,.08);
-    --line-strong:rgba(255,255,255,.18);
-    --ink:#f4f1ea;
-    --ink-dim:#a8a39a;
-    --ink-mute:#67635c;
-    --accent:#ff5b1f;          /* sensenova orange-red */
-    --accent-2:#ffd24a;         /* warm yellow */
-    --accent-3:#7cf2c9;         /* mint */
-    --grid:rgba(255,255,255,.04);
-    --shadow: 0 30px 80px -20px rgba(0,0,0,.6), 0 8px 20px -6px rgba(0,0,0,.5);
-    --serif:'Fraunces','Noto Sans SC',serif;
-    --mono:'JetBrains Mono',ui-monospace,monospace;
-    --sans:'Noto Sans SC',-apple-system,system-ui,sans-serif;
-  }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>日日新 AI 生图 - SenseNova U1</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --bg-dark: #0f0f1a;
+            --bg-card: #1a1a2e;
+            --bg-input: #16213e;
+            --text: #e8e8f0;
+            --text-muted: #8892b0;
+            --border: #2d2d44;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --error: #ef4444;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: var(--bg-dark);
+            color: var(--text);
+            min-height: 100vh;
+            line-height: 1.6;
+            animation: fadeIn 0.5s ease-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: var(--bg-input);
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--text-muted);
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        /* Header */
+        .header {
+            text-align: center;
+            padding: 50px 20px 40px;
+            background: linear-gradient(135deg, var(--bg-card) 0%, var(--bg-dark) 100%);
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 30px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(99, 102, 241, 0.1) 0%, transparent 50%);
+            animation: shimmer 15s ease-in-out infinite;
+        }
+        
+        @keyframes shimmer {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            50% { transform: translate(-2%, -2%) rotate(5deg); }
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #6366f1, #a855f7, #ec4899);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .header h1 span {
+            background: inherit;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .header p {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+            position: relative;
+            z-index: 1;
+        }
+        
+        /* API Configuration Panel */
+        .config-panel {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+        
+        .config-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            cursor: pointer;
+            user-select: none;
+        }
+        
+        .config-header:hover {
+            opacity: 0.9;
+        }
+        
+        .config-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .config-toggle {
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
+            background: var(--bg-input);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            transition: transform 0.3s ease;
+        }
+        
+        .config-panel.open .config-toggle {
+            transform: rotate(180deg);
+        }
+        
+        .config-body {
+            display: none;
+        }
+        
+        .config-panel.open .config-body {
+            display: block;
+            animation: slideDown 0.3s ease-out;
+        }
+        
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .config-input-group {
+            margin-bottom: 12px;
+        }
+        
+        .config-input-group:last-child {
+            margin-bottom: 0;
+        }
+        
+        .config-label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+        }
+        
+        .config-input {
+            width: 100%;
+            background: var(--bg-input);
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            padding: 10px 14px;
+            color: var(--text);
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+        
+        .config-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+        }
+        
+        .config-input::placeholder {
+            color: var(--text-muted);
+            opacity: 0.5;
+        }
+        
+        .config-hint {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 4px;
+            opacity: 0.7;
+        }
+        
+        .btn-save-config {
+            width: 100%;
+            margin-top: 12px;
+            background: linear-gradient(135deg, #10b981, #059669);
+        }
+        
+        .btn-save-config:hover:not(:disabled) {
+            box-shadow: 0 8px 25px rgba(16, 185, 129, 0.4);
+        }
+        
+        /* API Status Badge */
+        .api-status-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            background: var(--bg-input);
+        }
+        
+        .api-status-indicator .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--warning);
+        }
+        
+        .api-status-indicator.connected .dot {
+            background: var(--success);
+        }
+        
+        .api-status-indicator.error .dot {
+            background: var(--error);
+        }
+        
+        /* Main Grid */
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+            animation: slideUp 0.5s ease-out 0.1s both;
+        }
+        
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @media (max-width: 900px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        /* Card */
+        .card {
+            background: var(--bg-card);
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            padding: 25px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3), 0 1px 3px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+        }
+        
+        .card:hover {
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4), 0 2px 6px rgba(0, 0, 0, 0.3);
+        }
+        
+        .card-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .card-title .icon {
+            width: 28px;
+            height: 28px;
+            background: linear-gradient(135deg, var(--primary), #a855f7);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+        }
+        
+        /* Form Elements */
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-label {
+            display: block;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+        }
+        
+        .form-input, .form-textarea, .form-select {
+            width: 100%;
+            background: var(--bg-input);
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            padding: 12px 16px;
+            color: var(--text);
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+        
+        .form-input:focus, .form-textarea:focus, .form-select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+        }
+        
+        .form-input::placeholder, .form-textarea::placeholder {
+            color: var(--text-muted);
+            opacity: 0.6;
+        }
+        
+        /* Size Grid */
+        .size-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 10px;
+        }
+        
+        .size-item label.size-label {
+            display: block;
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+        }
+        
+        .size-preview {
+            font-size: 0.85rem;
+            color: var(--primary);
+            font-weight: 500;
+            padding: 8px 12px;
+            background: rgba(99, 102, 241, 0.1);
+            border-radius: 8px;
+            text-align: center;
+            border: 1px solid rgba(99, 102, 241, 0.2);
+        }
+        
+        .form-textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+        
+        .form-select {
+            cursor: pointer;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%238892b0' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10l-5 5z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            padding-right: 36px;
+        }
+        
+        /* Button */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px 24px;
+            font-size: 1rem;
+            font-weight: 600;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            color: white;
+        }
+        
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(99, 102, 241, 0.4);
+        }
+        
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        
+        .btn-danger {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: white;
+        }
+        
+        .btn-danger:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(239, 68, 68, 0.4);
+        }
+        
+        .btn-secondary {
+            background: var(--surface);
+            color: var(--text);
+            border: 2px solid var(--border);
+        }
+        
+        .btn-secondary:hover {
+            background: var(--border);
+        }
+        
+        .btn-small {
+            padding: 8px 16px;
+            font-size: 0.85rem;
+            border-radius: 8px;
+        }
+        
+        /* Settings Panel */
+        .settings-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        
+        .setting-item {
+            background: var(--bg-input);
+            border-radius: 10px;
+            padding: 15px;
+        }
+        
+        .setting-label {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+        }
+        
+        .setting-value {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--primary);
+        }
+        
+        /* Image Preview */
+        .image-container {
+            min-height: 400px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+            background: var(--bg-input);
+            border: 2px dashed var(--border);
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+        
+        .image-container.has-image {
+            border-style: solid;
+            border-color: var(--primary);
+        }
+        
+        .image-container img {
+            max-width: 100%;
+            max-height: 500px;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+            animation: fadeIn 0.5s ease-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        
+        .image-container:hover img {
+            transform: scale(1.02);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+        }
+        .placeholder {
+            text-align: center;
+            color: var(--text-muted);
+            padding: 60px 20px;
+        }
+        
+        .placeholder-icon {
+            font-size: 4rem;
+            margin-bottom: 15px;
+            opacity: 0.3;
+            display: inline-block;
+            filter: grayscale(100%);
+            transition: all 0.3s ease;
+        }
+        
+        .image-container:hover .placeholder-icon {
+            opacity: 0.6;
+            filter: grayscale(0%);
+            transform: scale(1.1);
+        }
+        
+        .placeholder-text {
+            font-size: 1.1rem;
+            color: var(--text-muted);
+        }
+        
+        .placeholder-subtext {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            opacity: 0.6;
+            margin-top: 8px;
+        }
+        
+        /* HUD Scanline Loader */
+        .loading {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 18px;
+            width: 100%;
+            padding: 26px;
+        }
+        
+        .loading.active {
+            display: flex;
+        }
+        
+        .scanline-loader {
+            width: min(100%, 420px);
+            aspect-ratio: 1;
+            position: relative;
+            overflow: hidden;
+            border-radius: 18px;
+            border: 1px solid rgba(99, 102, 241, 0.72);
+            background:
+                radial-gradient(circle at 50% 35%, rgba(168, 85, 247, 0.2), transparent 34%),
+                linear-gradient(180deg, rgba(99, 102, 241, 0.08), rgba(15, 15, 26, 0.9));
+            box-shadow:
+                inset 0 0 0 1px rgba(255, 255, 255, 0.04),
+                inset 0 0 60px rgba(99, 102, 241, 0.12),
+                0 24px 70px rgba(0, 0, 0, 0.38),
+                0 0 34px rgba(99, 102, 241, 0.18);
+        }
+        
+        .scanline-loader::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(255, 255, 255, 0.045) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.045) 1px, transparent 1px);
+            background-size: 34px 34px;
+            mask-image: radial-gradient(circle at 50% 48%, black 35%, transparent 78%);
+            opacity: 0.85;
+        }
+        
+        .scanline-loader::after {
+            content: '';
+            position: absolute;
+            inset: 9%;
+            border-radius: 50%;
+            border: 1px dashed rgba(232, 232, 240, 0.16);
+            animation: scanRotate 24s linear infinite;
+        }
 
-  *{box-sizing:border-box}
-  html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:var(--sans);-webkit-font-smoothing:antialiased}
-  body{
-    min-height:100vh;
-    background:
-      radial-gradient(1200px 600px at 80% -10%, rgba(255,91,31,.12), transparent 60%),
-      radial-gradient(900px 500px at -10% 110%, rgba(124,242,201,.08), transparent 60%),
-      linear-gradient(180deg,#0a0a0c 0%, #07070a 100%);
-    background-attachment: fixed;
-  }
-  body::before{
-    content:"";
-    position:fixed;inset:0;
-    background-image:
-      linear-gradient(var(--grid) 1px, transparent 1px),
-      linear-gradient(90deg, var(--grid) 1px, transparent 1px);
-    background-size: 56px 56px;
-    pointer-events:none;
-    mask-image: radial-gradient(ellipse 80% 60% at 50% 40%, black 30%, transparent 80%);
-    z-index:0;
-  }
-  body::after{
-    /* film grain */
-    content:"";
-    position:fixed;inset:0;
-    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.06 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
-    pointer-events:none;
-    opacity:.5;
-    mix-blend-mode:overlay;
-    z-index:1;
-  }
+        .scanline-sweep {
+            position: absolute;
+            left: 0;
+            right: 0;
+            height: 2px;
+            top: 0;
+            background: linear-gradient(90deg, transparent, #a855f7, #10b981, transparent);
+            box-shadow:
+                0 0 18px rgba(168, 85, 247, 0.9),
+                0 0 42px rgba(16, 185, 129, 0.55);
+            animation: scanSweep 2.4s ease-in-out infinite;
+        }
 
-  .wrap{position:relative;z-index:2;max-width:1440px;margin:0 auto;padding:28px 36px 80px}
+        .scanline-sweep::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            right: 0;
+            top: -18px;
+            height: 38px;
+            background: linear-gradient(180deg, transparent, rgba(99, 102, 241, 0.18), transparent);
+        }
 
-  /* =================  TOPBAR  ================= */
-  .topbar{display:flex;align-items:center;justify-content:space-between;padding-bottom:18px;border-bottom:1px solid var(--line)}
-  .brand{display:flex;align-items:center;gap:14px}
-  .brand-mark{
-    width:38px;height:38px;border-radius:10px;
-    background: conic-gradient(from 220deg at 50% 50%, #ff5b1f, #ffd24a, #ff5b1f);
-    display:grid;place-items:center;
-    box-shadow: 0 0 0 1px rgba(255,255,255,.1) inset, 0 10px 30px -10px rgba(255,91,31,.6);
-    position:relative;
-  }
-  .brand-mark::after{
-    content:"";position:absolute;inset:6px;border-radius:6px;background:#0a0a0c;
-  }
-  .brand-mark span{position:relative;z-index:1;font-family:var(--serif);font-style:italic;font-weight:700;color:#ffd24a;font-size:18px}
-  .brand-name{font-family:var(--serif);font-size:22px;letter-spacing:.5px}
-  .brand-name em{color:var(--accent);font-style:italic;font-weight:500}
-  .brand-tag{font-family:var(--mono);font-size:11px;color:var(--ink-mute);letter-spacing:.18em;text-transform:uppercase;margin-left:14px;padding-left:14px;border-left:1px solid var(--line)}
-  .top-meta{display:flex;align-items:center;gap:22px;font-family:var(--mono);font-size:11px;color:var(--ink-mute);letter-spacing:.14em}
-  .dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--accent-3);box-shadow:0 0 10px var(--accent-3);margin-right:8px;animation:pulse 2.4s infinite ease-in-out}
-  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+        .scanline-core {
+            position: absolute;
+            inset: 38%;
+            border-radius: 50%;
+            background: conic-gradient(from 0deg, var(--primary), #a855f7, var(--success), var(--primary));
+            filter: blur(14px);
+            opacity: 0.7;
+            animation: coreBreath 3.2s ease-in-out infinite;
+        }
 
-  /* =================  HERO  ================= */
-  .hero{padding:46px 0 28px;display:grid;grid-template-columns:1.3fr 1fr;gap:40px;align-items:end;border-bottom:1px solid var(--line)}
-  .hero h1{
-    font-family:var(--serif);
-    font-weight:300;
-    font-size: clamp(48px, 6.4vw, 96px);
-    line-height:.95;
-    letter-spacing:-.02em;
-    margin:0;
-  }
-  .hero h1 .it{font-style:italic;font-weight:500;color:var(--accent)}
-  .hero h1 .sm{display:block;font-size:.32em;letter-spacing:.4em;color:var(--ink-mute);font-style:normal;font-weight:400;margin-top:18px;font-family:var(--mono);text-transform:uppercase}
-  .hero-side{font-size:14px;line-height:1.7;color:var(--ink-dim);max-width:380px;justify-self:end}
-  .hero-side b{color:var(--ink);font-weight:500}
-  .hero-side .num{font-family:var(--mono);color:var(--accent-2)}
+        .scanline-label {
+            position: absolute;
+            left: 50%;
+            bottom: 18px;
+            transform: translateX(-50%);
+            font-size: 0.72rem;
+            letter-spacing: 0.22em;
+            color: rgba(232, 232, 240, 0.55);
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            text-transform: uppercase;
+            white-space: nowrap;
+        }
 
-  /* =================  STUDIO  ================= */
-  .studio{display:grid;grid-template-columns:380px 1fr;gap:0;margin-top:32px;border:1px solid var(--line);border-radius:18px;overflow:hidden;background:linear-gradient(180deg, rgba(20,20,26,.7), rgba(10,10,14,.7));backdrop-filter: blur(8px)}
-  .panel{padding:28px;border-right:1px solid var(--line);background:rgba(0,0,0,.2)}
-  .panel h3{font-family:var(--mono);font-size:11px;font-weight:500;letter-spacing:.22em;color:var(--ink-mute);text-transform:uppercase;margin:0 0 14px;display:flex;align-items:center;justify-content:space-between}
-  .panel h3 .idx{color:var(--accent)}
-  .panel + .panel{border-top:1px solid var(--line)}
+        .scanline-meta {
+            position: absolute;
+            top: 16px;
+            left: 18px;
+            right: 18px;
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            font-size: 0.68rem;
+            letter-spacing: 0.14em;
+            color: rgba(232, 232, 240, 0.48);
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            text-transform: uppercase;
+        }
 
-  .field{margin-bottom:22px}
-  .field label{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.2em;color:var(--ink-mute);text-transform:uppercase;margin-bottom:8px}
-  .input, .textarea, .select{
-    width:100%;
-    background:rgba(255,255,255,.03);
-    border:1px solid var(--line);
-    color:var(--ink);
-    padding:11px 14px;
-    border-radius:8px;
-    font-family:var(--mono);
-    font-size:13px;
-    line-height:1.5;
-    transition: all .25s ease;
-    outline:none;
-  }
-  .textarea{font-family:var(--sans);font-size:14px;line-height:1.65;min-height:120px;resize:vertical}
-  .input:focus,.textarea:focus,.select:focus{border-color:var(--accent);background:rgba(255,91,31,.05);box-shadow: 0 0 0 3px rgba(255,91,31,.12)}
-  .input::placeholder, .textarea::placeholder{color:var(--ink-mute)}
+        @keyframes scanSweep {
+            0% { top: 0; opacity: 0.35; }
+            12% { opacity: 1; }
+            50% { top: calc(100% - 2px); opacity: 1; }
+            88% { opacity: 0.75; }
+            100% { top: 0; opacity: 0.35; }
+        }
 
-  .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+        @keyframes scanRotate {
+            to { transform: rotate(360deg); }
+        }
 
-  .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
-  .chip{
-    font-family:var(--mono);font-size:10px;letter-spacing:.1em;
-    padding:5px 9px;border:1px solid var(--line);border-radius:999px;
-    color:var(--ink-dim);cursor:pointer;background:transparent;
-    transition: all .2s;
-  }
-  .chip:hover{color:var(--accent);border-color:var(--accent)}
-  .chip.active{background:var(--accent);color:#0a0a0c;border-color:var(--accent)}
-
-  .seg{display:flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
-  .seg button{
-    flex:1;background:transparent;border:0;border-right:1px solid var(--line);
-    color:var(--ink-dim);font-family:var(--mono);font-size:11px;letter-spacing:.12em;
-    padding:10px 4px;cursor:pointer;transition:all .2s;
-  }
-  .seg button:last-child{border-right:0}
-  .seg button:hover{color:var(--ink)}
-  .seg button.on{background:var(--ink);color:#0a0a0c;font-weight:600}
-
-  .submit{
-    margin-top:8px;
-    width:100%;display:flex;align-items:center;justify-content:space-between;gap:10px;
-    background:var(--accent);color:#0a0a0c;border:0;
-    padding:18px 22px;border-radius:12px;
-    font-family:var(--serif);font-style:italic;font-size:22px;font-weight:500;
-    cursor:pointer;transition: all .25s;letter-spacing:-.01em;
-    box-shadow: 0 16px 40px -12px rgba(255,91,31,.5);
-  }
-  .submit:hover{transform:translateY(-2px);box-shadow:0 22px 50px -10px rgba(255,91,31,.65)}
-  .submit:disabled{opacity:.5;cursor:not-allowed;transform:none}
-  .submit svg{width:22px;height:22px}
-
-  .help{font-family:var(--mono);font-size:10px;color:var(--ink-mute);line-height:1.6;margin-top:6px;letter-spacing:.04em}
-  .help a{color:var(--accent-2);text-decoration:none;border-bottom:1px dashed var(--accent-2)}
-
-  /* =================  CANVAS  ================= */
-  .canvas{padding:28px;display:flex;flex-direction:column;min-height:680px}
-  .canvas-head{display:flex;justify-content:space-between;align-items:center;padding-bottom:18px;border-bottom:1px solid var(--line)}
-  .canvas-head h3{margin:0;font-family:var(--mono);font-size:11px;letter-spacing:.22em;color:var(--ink-mute);text-transform:uppercase}
-  .canvas-head .count{font-family:var(--mono);font-size:11px;color:var(--ink-dim)}
-  .canvas-head .count b{color:var(--accent-2)}
-
-  .canvas-body{flex:1;padding:24px 0;display:flex;flex-direction:column}
-
-  /* empty state */
-  .empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:40px 20px;position:relative}
-  .empty-art{
-    width:280px;height:280px;position:relative;
-  }
-  .empty-art .ring{position:absolute;inset:0;border:1px dashed var(--line-strong);border-radius:50%;animation:rot 30s linear infinite}
-  .empty-art .ring.r2{inset:36px;border-style:solid;border-color:var(--line);animation-duration:18s;animation-direction:reverse}
-  .empty-art .ring.r3{inset:80px;border-color:var(--accent);opacity:.3}
-  .empty-art .core{
-    position:absolute;inset:110px;border-radius:50%;
-    background: conic-gradient(from 0deg, var(--accent), var(--accent-2), var(--accent-3), var(--accent));
-    filter:blur(14px);opacity:.7;animation:pulse2 4s ease-in-out infinite;
-  }
-  .empty-art .core2{
-    position:absolute;inset:120px;border-radius:50%;
-    background:#0a0a0c;
-    box-shadow: 0 0 30px rgba(255,91,31,.5);
-  }
-  .empty-art .label{
-    position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
-    font-family:var(--mono);font-size:10px;letter-spacing:.3em;color:var(--ink-mute);
-  }
-  @keyframes rot{to{transform:rotate(360deg)}}
-  @keyframes pulse2{0%,100%{opacity:.6}50%{opacity:1}}
-  .empty h2{font-family:var(--serif);font-style:italic;font-weight:400;font-size:32px;margin:24px 0 8px;color:var(--ink)}
-  .empty p{font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-mute);max-width:420px}
-
-  /* loading */
-  .loading{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px}
-  .scanlines{
-    width:100%;max-width:520px;aspect-ratio:1;border:1px solid var(--accent);border-radius:14px;position:relative;overflow:hidden;
-    background: linear-gradient(180deg, rgba(255,91,31,.02), rgba(0,0,0,.6));
-  }
-  .scanlines::before{
-    content:"";position:absolute;left:0;right:0;height:2px;
-    background: linear-gradient(90deg, transparent, var(--accent), transparent);
-    animation: scan 2.2s ease-in-out infinite;
-    box-shadow: 0 0 24px var(--accent);
-  }
-  @keyframes scan{0%{top:0}50%{top:calc(100% - 2px)}100%{top:0}}
-  .scanlines .meta{position:absolute;bottom:14px;left:18px;right:18px;display:flex;justify-content:space-between;font-family:var(--mono);font-size:10px;color:var(--ink-dim);letter-spacing:.16em}
-  .scanlines .ascii{position:absolute;top:14px;left:18px;font-family:var(--mono);font-size:10px;color:var(--accent);letter-spacing:.04em;line-height:1.5;opacity:.7}
-  .ldot{display:inline-block;width:6px;height:6px;background:var(--accent);border-radius:50%;margin:0 3px;animation:ldot 1.4s infinite}
-  .ldot:nth-child(2){animation-delay:.2s}
-  .ldot:nth-child(3){animation-delay:.4s}
-  @keyframes ldot{0%,80%,100%{opacity:.2;transform:translateY(0)}40%{opacity:1;transform:translateY(-4px)}}
-
-  /* result grid */
-  .results{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:18px}
-  .card{
-    border:1px solid var(--line);border-radius:14px;overflow:hidden;
-    background:#000;position:relative;
-    transition:all .35s cubic-bezier(.2,.7,.2,1);
-    animation: slideIn .6s cubic-bezier(.2,.7,.2,1) backwards;
-  }
-  .card:nth-child(2){animation-delay:.08s}
-  .card:nth-child(3){animation-delay:.16s}
-  .card:nth-child(4){animation-delay:.24s}
-  @keyframes slideIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
-  .card:hover{border-color:var(--accent);transform:translateY(-4px)}
-  .card img{display:block;width:100%;height:auto;aspect-ratio:1;object-fit:cover}
-  .card .meta{
-    position:absolute;left:0;right:0;bottom:0;padding:14px 16px;
-    background:linear-gradient(0deg, rgba(0,0,0,.85), transparent);
-    display:flex;justify-content:space-between;align-items:end;gap:10px;
-    transform:translateY(8px);opacity:0;transition:all .3s;
-  }
-  .card:hover .meta{transform:none;opacity:1}
-  .card .idx{font-family:var(--serif);font-style:italic;font-size:28px;line-height:1;color:var(--accent-2)}
-  .card .actions{display:flex;gap:8px}
-  .card .iconbtn{
-    width:34px;height:34px;border-radius:8px;border:1px solid var(--line-strong);
-    background:rgba(255,255,255,.08);backdrop-filter:blur(6px);
-    color:var(--ink);display:grid;place-items:center;cursor:pointer;
-    text-decoration:none;transition:all .2s;
-  }
-  .card .iconbtn:hover{background:var(--accent);color:#0a0a0c;border-color:var(--accent)}
-  .card .iconbtn svg{width:16px;height:16px}
-
-  /* error */
-  .error{
-    margin-top:14px;padding:14px 16px;border-radius:10px;
-    border:1px solid rgba(255,91,31,.4);background:rgba(255,91,31,.08);
-    font-family:var(--mono);font-size:12px;color:#ffb799;line-height:1.6;
-    display:none;
-  }
-  .error.on{display:block;animation:slideIn .3s}
-  .error b{color:var(--accent);font-weight:500}
-
-  /* prompt log */
-  .log{
-    margin-top:24px;padding-top:20px;border-top:1px solid var(--line);
-    font-family:var(--mono);font-size:11px;color:var(--ink-mute);line-height:1.7;
-    display:flex;gap:14px;flex-wrap:wrap;align-items:flex-start;
-  }
-  .log .k{color:var(--ink-dim);min-width:80px}
-  .log .v{color:var(--ink);flex:1;word-break:break-word}
-  .log .v.prompt{color:var(--accent-2);font-family:var(--serif);font-style:italic;font-size:14px;line-height:1.5}
-
-  /* =================  FOOTER  ================= */
-  .foot{margin-top:48px;display:flex;justify-content:space-between;align-items:center;font-family:var(--mono);font-size:10px;color:var(--ink-mute);letter-spacing:.18em;text-transform:uppercase;padding-top:24px;border-top:1px solid var(--line)}
-  .foot a{color:var(--ink-dim);text-decoration:none}
-  .foot a:hover{color:var(--accent)}
-
-  /* responsive */
-  @media (max-width: 1080px){
-    .hero{grid-template-columns:1fr;gap:24px}
-    .hero-side{justify-self:start}
-    .studio{grid-template-columns:1fr}
-    .panel{border-right:0;border-bottom:1px solid var(--line)}
-  }
-  @media (max-width: 640px){
-    .wrap{padding:18px}
-    .top-meta{display:none}
-    .brand-tag{display:none}
-  }
-</style>
+        @keyframes coreBreath {
+            0%, 100% { opacity: 0.42; transform: scale(0.92); }
+            50% { opacity: 0.9; transform: scale(1.1); }
+        }
+        
+        .loading-text {
+            color: var(--text);
+            font-size: 1rem;
+            font-weight: 500;
+            text-align: center;
+        }
+        
+        .loading-pulse {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+        }
+        
+        .loading-pulse span {
+            width: 8px;
+            height: 8px;
+            background: var(--primary);
+            border-radius: 50%;
+            animation: pulse 1.4s ease-in-out infinite;
+        }
+        
+        .loading-pulse span:nth-child(2) { animation-delay: 0.2s; }
+        .loading-pulse span:nth-child(3) { animation-delay: 0.4s; }
+        .loading-pulse span:nth-child(4) { animation-delay: 0.6s; }
+        .loading-pulse span:nth-child(5) { animation-delay: 0.8s; }
+        
+        @keyframes pulse {
+            0%, 80%, 100% { transform: scale(0.8); opacity: 0.5; }
+            40% { transform: scale(1.2); opacity: 1; }
+        }
+        
+        /* Progress Steps */
+        .progress-steps {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-bottom: 20px;
+        }
+        
+        .progress-step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            opacity: 0.5;
+            transition: all 0.3s ease;
+        }
+        
+        .progress-step.active {
+            opacity: 1;
+        }
+        
+        .progress-step.completed .step-icon {
+            background: var(--success);
+        }
+        
+        .progress-step.active .step-icon {
+            background: var(--primary);
+            animation: pulse 2s ease-in-out infinite;
+        }
+        
+        .step-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            transition: all 0.3s ease;
+        }
+        
+        .step-label {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            text-align: center;
+        }
+        
+        .progress-step.active .step-label {
+            color: var(--text);
+            font-weight: 600;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        
+        /* Status Messages */
+        .status-message {
+            padding: 12px 16px;
+            border-radius: 10px;
+            margin-top: 15px;
+            font-size: 0.9rem;
+            display: none;
+            align-items: center;
+            gap: 10px;
+            animation: slideIn 0.3s ease-out;
+        }
+        
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .status-message.success {
+            display: flex;
+            background: rgba(34, 197, 94, 0.1);
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            color: #22c55e;
+        }
+        
+        .status-message.error {
+            display: flex;
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #ef4444;
+        }
+        
+        .status-message.info {
+            display: flex;
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            color: #3b82f6;
+        }
+        
+        .status-message.warning {
+            display: flex;
+            background: rgba(251, 191, 36, 0.1);
+            border: 1px solid rgba(251, 191, 36, 0.3);
+            color: #fbbf24;
+        }
+            color: var(--warning);
+        }
+        
+        .status-success {
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid var(--success);
+            color: var(--success);
+        }
+        
+        .status-info {
+            background: rgba(99, 102, 241, 0.1);
+            border: 1px solid var(--primary);
+            color: var(--primary);
+        }
+        
+        /* Image Actions */
+        .image-actions {
+            display: none;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .image-actions .btn {
+            flex: 1;
+            min-width: 100px;
+            font-size: 0.9rem;
+            padding: 10px 16px;
+        }
+        
+        /* Prompt Suggestions */
+        .suggestions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 10px;
+        }
+        
+        .suggestion-tag {
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .suggestion-tag:hover {
+            border-color: var(--primary);
+            color: var(--text);
+        }
+        
+        /* Collection Items */
+        .collection-item {
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 14px;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .collection-item:hover {
+            border-color: var(--primary);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+        }
+        
+        .collection-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 10px;
+        }
+        
+        .collection-title {
+            font-size: 0.9rem;
+            color: var(--text);
+            line-height: 1.4;
+            flex: 1;
+            padding-right: 10px;
+        }
+        
+        .collection-actions {
+            display: flex;
+            gap: 6px;
+        }
+        
+        .btn-icon {
+            width: 28px;
+            height: 28px;
+            border: none;
+            border-radius: 8px;
+            background: var(--bg-card);
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .btn-icon:hover {
+            background: var(--primary);
+            transform: scale(1.1);
+        }
+        
+        .btn-icon.delete:hover {
+            background: var(--error);
+        }
+        
+        .collection-item .collection-actions .btn-icon.delete:hover {
+            background: var(--error);
+        }
+        
+        .collection-meta {
+            display: flex;
+            gap: 12px;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+        
+        /* History */
+        .history-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .history-item {
+            display: flex;
+            gap: 12px;
+            padding: 12px;
+            background: var(--bg-input);
+            border-radius: 10px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            align-items: center;
+            border: 1px solid transparent;
+        }
+        
+        .history-item:hover {
+            background: var(--border);
+            transform: translateX(5px);
+        }
+        
+        .history-item.active {
+            border-color: var(--primary);
+            background: rgba(99, 102, 241, 0.1);
+        }
+        
+        .history-item .history-info {
+            flex: 1;
+            min-width: 0;
+            cursor: pointer;
+        }
+        
+        .history-item .history-info:hover {
+            opacity: 1;
+        }
+        
+        .history-thumb {
+            width: 60px;
+            height: 60px;
+            border-radius: 8px;
+            object-fit: cover;
+            background: var(--bg-dark);
+            flex-shrink: 0;
+            transition: transform 0.3s ease;
+        }
+        
+        .history-item:hover .history-thumb {
+            transform: scale(1.05);
+        }
+        
+        .history-info {
+            flex: 1;
+            min-width: 0;
+        }
+        
+        .history-prompt {
+            font-size: 0.85rem;
+            color: var(--text);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .history-time {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+        
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            margin-top: 50px;
+            border-top: 1px solid var(--border);
+        }
+        
+        .footer a {
+            color: var(--primary);
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+        
+        .footer a:hover {
+            text-decoration: underline;
+            color: #a855f7;
+        }
+        
+        .footer .heart {
+            color: #ef4444;
+            animation: heartbeat 1.5s ease-in-out infinite;
+        }
+        
+        @keyframes heartbeat {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+        }
+        
+        /* Responsive */
+        @media (max-width: 600px) {
+            .header h1 {
+                font-size: 1.8rem;
+            }
+            
+            .card {
+                padding: 20px;
+            }
+            
+            .settings-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .progress-steps {
+                gap: 15px;
+            }
+            
+            .step-icon {
+                width: 35px;
+                height: 35px;
+                font-size: 1rem;
+            }
+            
+            .btn {
+                padding: 10px 16px;
+                font-size: 0.9rem;
+            }
+            
+            .image-actions {
+                flex-direction: column;
+            }
+            
+            .image-actions .btn {
+                width: 100%;
+            }
+        }
+    </style>
 </head>
 <body>
-<div class="wrap">
-
-  <!-- TOPBAR -->
-  <header class="topbar">
-    <div class="brand">
-      <div class="brand-mark"><span>S</span></div>
-      <div class="brand-name">Sense<em>Nova</em></div>
-      <div class="brand-tag">Image Studio · 公测期免费</div>
+    <div class="header">
+        <h1>🎨 日日新 AI 生图</h1>
+        <p>SenseNova U1 · 文生图服务</p>
     </div>
-    <div class="top-meta">
-      <span><span class="dot"></span>token.sensenova.cn / v1</span>
-      <span>2026 · 06</span>
-    </div>
-  </header>
-
-  <!-- HERO -->
-  <section class="hero">
-    <h1>
-      画一张<span class="it">从未</span>存在<br/>的画面。
-      <span class="sm">Text-to-Image · OpenAI Compatible · sensenova-u1-fast</span>
-    </h1>
-    <aside class="hero-side">
-      调用商汤 <b>SenseNova</b> 公测期免费 Token 接口,直接在浏览器里生成图像。所有请求都从你当前页面发出,
-      <b>API Key 仅保存在本地浏览器</b>,不会上传到任何第三方服务器。
-      免费额度:每模型 <span class="num">1500</span> 次 / 5h,Key 上限 <span class="num">20</span> 个。
-    </aside>
-  </section>
-
-  <!-- STUDIO -->
-  <section class="studio">
-
-    <!-- LEFT PANEL -->
-    <aside class="panel" style="display:flex;flex-direction:column">
-
-      <h3><span>01 · 凭证</span><span class="idx">/ AUTH</span></h3>
-      <div class="field">
-        <label>API Key</label>
-        <input id="apiKey" class="input" type="password" placeholder="sk-xxxxxxxxxxxxxxxxxxxx" autocomplete="off" />
-        <div class="help">
-          在 <a href="https://platform.sensenova.cn/login" target="_blank" rel="noopener">platform.sensenova.cn</a> 控制台创建 ·
-          仅保存在 localStorage
-        </div>
-      </div>
-      <div class="field">
-        <label>Base URL</label>
-        <input id="baseUrl" class="input" value="https://token.sensenova.cn/v1" />
-        <div class="help">
-          浏览器直连生图请使用 <code>https://token.sensenova.cn/v1</code>。
-          <code>api.sensenova.cn/v1</code> 不适合 GitHub Pages 静态页直连
-        </div>
-      </div>
-
-      <div style="height:18px;border-top:1px dashed var(--line);margin:6px 0 22px"></div>
-
-      <h3><span>02 · 提示词</span><span class="idx">/ PROMPT</span></h3>
-      <div class="field">
-        <label>Prompt</label>
-        <textarea id="prompt" class="textarea" placeholder="一只金色凤凰在日出时穿越云海,东方水墨与赛博朋克霓虹的融合,细节丰富,电影级光照"></textarea>
-        <div class="chips" id="presetChips">
-          <button class="chip" data-p="一只金色凤凰在日出时穿越云海,东方水墨与赛博朋克霓虹融合,细节丰富,电影级光照">凤凰 · 水墨</button>
-          <button class="chip" data-p="未来主义都市夜景,雨后湿润街道,霓虹倒影,广角镜头,胶片颗粒,Wong Kar-wai 风格">赛博都市</button>
-          <button class="chip" data-p="极简静物,陶瓷茶器与一支白色梨花,柔和侧光,大面积留白,杂志摄影,4:5">极简静物</button>
-          <button class="chip" data-p="星空下的雪山湖泊,银河倒映在镜面湖水上,长曝光,National Geographic 风格">银河雪山</button>
-          <button class="chip" data-p="复古宇航员漂浮在粉色星云中,80年代海报美学,印刷网点,胶片质感">复古宇航</button>
-        </div>
-      </div>
-
-      <h3><span>03 · 参数</span><span class="idx">/ PARAMS</span></h3>
-
-      <div class="field">
-        <label>模型</label>
-        <select id="model" class="select">
-          <option value="sensenova-u1-fast">sensenova-u1-fast (推荐 · 多模态原生)</option>
-          <option value="sensenova-6.7-flash-lite">sensenova-6.7-flash-lite</option>
-        </select>
-      </div>
-
-      <div class="row">
-        <div class="field">
-          <label>尺寸</label>
-          <select id="size" class="select">
-            <option value="2048x2048">2048 × 2048 · 方形</option>
-            <option value="1664x2496">1664 × 2496 · 竖版 2:3</option>
-            <option value="2496x1664">2496 × 1664 · 横版 3:2</option>
-            <option value="1760x2368">1760 × 2368 · 竖版 3:4</option>
-            <option value="2368x1760">2368 × 1760 · 横版 4:3</option>
-            <option value="1824x2272">1824 × 2272 · 竖版 4:5</option>
-            <option value="2272x1824">2272 × 1824 · 横版 5:4</option>
-            <option value="2752x1536">2752 × 1536 · 宽屏 16:9</option>
-            <option value="1536x2752">1536 × 2752 · 竖屏 9:16</option>
-            <option value="3072x1376">3072 × 1376 · 超宽屏</option>
-            <option value="1344x3136">1344 × 3136 · 超长竖屏</option>
-          </select>
-        </div>
-        <div class="field">
-          <label>张数 · n</label>
-          <div class="seg" id="nSeg">
-            <button data-n="1" class="on">1</button>
-            <button data-n="2">2</button>
-            <button data-n="4">4</button>
-          </div>
-        </div>
-      </div>
-
-      <button id="go" class="submit" type="button">
-        <span>开始生成</span>
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m13 5 7 7-7 7"/></svg>
-      </button>
-      <div class="error" id="err"></div>
-    </aside>
-
-    <!-- RIGHT CANVAS -->
-    <main class="canvas">
-      <div class="canvas-head">
-        <h3>// CANVAS · 生成结果</h3>
-        <div class="count">RUN <b id="runCount">000</b> · ELAPSED <b id="elapsed">--</b></div>
-      </div>
-
-      <div class="canvas-body" id="canvasBody">
-        <div class="empty" id="emptyState">
-          <div class="empty-art">
-            <div class="ring"></div>
-            <div class="ring r2"></div>
-            <div class="ring r3"></div>
-            <div class="core"></div>
-            <div class="core2"></div>
-            <div class="label">IDLE</div>
-          </div>
-          <h2>等待你的 第一道光。</h2>
-          <p>填好 API Key、写一段提示词,然后按下生成。</p>
-        </div>
-      </div>
-    </main>
-  </section>
-
-  <footer class="foot">
-    <span>SENSENOVA · IMAGE STUDIO</span>
-    <span>BASE URL · TOKEN.SENSENOVA.CN/V1</span>
-    <span>BUILT 2026 · <a href="https://platform.sensenova.cn/login" target="_blank">GET API KEY →</a></span>
-  </footer>
-
-</div>
-
-<script>
-(function(){
-  const $ = (s)=>document.querySelector(s);
-  const apiKeyEl = $('#apiKey');
-  const baseUrlEl = $('#baseUrl');
-  const promptEl = $('#prompt');
-  const modelEl = $('#model');
-  const sizeEl = $('#size');
-  const nSeg = $('#nSeg');
-  const goBtn = $('#go');
-  const errBox = $('#err');
-  const canvasBody = $('#canvasBody');
-  const runCount = $('#runCount');
-  const elapsedEl = $('#elapsed');
-
-  // restore
-  try{
-    apiKeyEl.value = localStorage.getItem('sn_api_key') || '';
-    const savedBase = localStorage.getItem('sn_base_url');
-    if(savedBase && savedBase !== 'https://api.sensenova.cn/v1') baseUrlEl.value = savedBase;
-    if(savedBase === 'https://api.sensenova.cn/v1') {
-      baseUrlEl.value = 'https://token.sensenova.cn/v1';
-      localStorage.setItem('sn_base_url', 'https://token.sensenova.cn/v1');
-    }
-    const savedRun = parseInt(localStorage.getItem('sn_run_count')||'0',10);
-    runCount.textContent = String(savedRun).padStart(3,'0');
-  }catch(e){}
-
-  apiKeyEl.addEventListener('change', ()=>{ try{localStorage.setItem('sn_api_key',apiKeyEl.value)}catch(e){} });
-  baseUrlEl.addEventListener('change', ()=>{ try{localStorage.setItem('sn_base_url',baseUrlEl.value)}catch(e){} });
-
-  // chips
-  document.querySelectorAll('#presetChips .chip').forEach(c=>{
-    c.addEventListener('click', ()=>{
-      promptEl.value = c.dataset.p;
-      document.querySelectorAll('#presetChips .chip').forEach(x=>x.classList.remove('active'));
-      c.classList.add('active');
-      promptEl.focus();
-    });
-  });
-
-  // n segment
-  let nVal = 1;
-  nSeg.querySelectorAll('button').forEach(b=>{
-    b.addEventListener('click', ()=>{
-      nSeg.querySelectorAll('button').forEach(x=>x.classList.remove('on'));
-      b.classList.add('on');
-      nVal = parseInt(b.dataset.n,10);
-    });
-  });
-
-  function showError(msg){
-    errBox.innerHTML = '<b>ERROR</b> · ' + msg;
-    errBox.classList.add('on');
-  }
-  function clearError(){ errBox.classList.remove('on'); errBox.innerHTML=''; }
-
-  function renderLoading(){
-    canvasBody.innerHTML = `
-      <div class="loading">
-        <div class="scanlines">
-          <div class="ascii">
-&gt; INIT request<br/>
-&gt; POST /v1/images/generations<br/>
-&gt; model: ${modelEl.value}<br/>
-&gt; n: ${nVal} · size: ${sizeEl.value}<br/>
-&gt; awaiting tokens<span class="ldot"></span><span class="ldot"></span><span class="ldot"></span>
-          </div>
-          <div class="meta">
-            <span>RENDERING</span>
-            <span id="lTimer">00:00</span>
-          </div>
-        </div>
-      </div>
-    `;
-    const start = Date.now();
-    return setInterval(()=>{
-      const t = Math.floor((Date.now()-start)/1000);
-      const m = String(Math.floor(t/60)).padStart(2,'0');
-      const s = String(t%60).padStart(2,'0');
-      const el = document.getElementById('lTimer');
-      if(el) el.textContent = `${m}:${s}`;
-      elapsedEl.textContent = `${t}s`;
-    },300);
-  }
-
-  function renderResults(images, meta){
-    const cards = images.map((src,i)=>{
-      const isUrl = typeof src === 'string' && /^https?:\/\//.test(src);
-      const imgSrc = isUrl ? src : ('data:image/png;base64,'+src);
-      return `
-        <div class="card" style="animation-delay:${i*80}ms">
-          <img src="${imgSrc}" alt="generation ${i+1}" loading="lazy"/>
-          <div class="meta">
-            <div class="idx">0${i+1}</div>
-            <div class="actions">
-              <a class="iconbtn" href="${imgSrc}" target="_blank" title="打开" rel="noopener">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg>
-              </a>
-              <a class="iconbtn" href="${imgSrc}" download="sensenova-${Date.now()}-${i+1}.png" title="下载">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg>
-              </a>
+    
+    <div class="container">
+        <!-- API Configuration Panel -->
+        <div class="config-panel" id="configPanel">
+            <div class="config-header" onclick="toggleConfigPanel()">
+                <div class="config-title">
+                    <span>⚙️</span>
+                    API 配置
+                </div>
+                <div class="config-toggle">▼</div>
             </div>
-          </div>
+            <div class="config-body" id="configBody">
+                <div class="config-input-group">
+                    <label class="config-label">API 地址</label>
+                    <input type="text" class="config-input" id="configApiBase" placeholder="https://token.sensenova.cn/v1">
+                    <div class="config-hint">默认：https://token.sensenova.cn/v1</div>
+                </div>
+                <div class="config-input-group">
+                    <label class="config-label">API Key</label>
+                    <input type="password" class="config-input" id="configApiKey" placeholder="sk-xxxxxxxxxxxxxxxxxxxxxxxx">
+                    <div class="config-hint">在 <a href="https://platform.sensenova.cn" target="_blank">商汤开放平台</a> 获取</div>
+                </div>
+                <button class="btn btn-primary btn-save-config" onclick="saveConfig()">💾 保存配置</button>
+                <div class="config-hint" style="margin-top: 8px; text-align: center;">
+                    配置将保存在浏览器本地存储中
+                </div>
+            </div>
         </div>
-      `;
-    }).join('');
-
-    canvasBody.innerHTML = `
-      <div class="results">${cards}</div>
-      <div class="log">
-        <span class="k">// PROMPT</span>
-        <span class="v prompt">"${meta.prompt.replace(/"/g,'&quot;')}"</span>
-      </div>
-      <div class="log" style="border-top:0;padding-top:0">
-        <span class="k">// MODEL</span><span class="v">${meta.model}</span>
-        <span class="k">// SIZE</span><span class="v">${meta.size}</span>
-        <span class="k">// N</span><span class="v">${meta.n}</span>
-        <span class="k">// LATENCY</span><span class="v">${meta.elapsed}s</span>
-      </div>
-    `;
-  }
-
-  async function generate(){
-    clearError();
-    const key = apiKeyEl.value.trim();
-    const base = baseUrlEl.value.trim().replace(/\/$/,'');
-    const prompt = promptEl.value.trim();
-    if(!key){ showError('请先填写 API Key。可在 platform.sensenova.cn 控制台创建。'); apiKeyEl.focus(); return; }
-    if(!prompt){ showError('Prompt 不能为空。'); promptEl.focus(); return; }
-
-    try{ localStorage.setItem('sn_api_key', key); localStorage.setItem('sn_base_url', base); }catch(e){}
-
-    goBtn.disabled = true;
-    goBtn.querySelector('span').textContent = '生成中...';
-    const timer = renderLoading();
-    const t0 = Date.now();
-
-    try{
-      const resp = await fetch(base + '/images/generations', {
-        method: 'POST',
-        headers: {
-          'Content-Type':'application/json',
-          'Authorization':'Bearer ' + key
-        },
-        body: JSON.stringify({
-          model: modelEl.value,
-          prompt: prompt,
-          n: nVal,
-          size: sizeEl.value,
-          response_format: 'url'
-        })
-      });
-
-      const text = await resp.text();
-      let data;
-      try{ data = JSON.parse(text); }catch(_){ data = { raw:text }; }
-
-      if(!resp.ok){
-        const m = (data && (data.error?.message || data.message)) || (data.raw||'').slice(0,300) || ('HTTP '+resp.status);
-        if(resp.status === 401 || /Forbidden/i.test(m)){
-          throw new Error('鉴权失败: Key 无效、未开通 SenseNova Token 计划,或当前 Key 没有 `sensenova-u1-fast` 生图权限。原始返回: ' + m);
-        }
-        if(resp.status === 404){
-          throw new Error('接口路径不可用: 请确认 Base URL 是 `https://token.sensenova.cn/v1`,不要使用 `api.sensenova.cn/v1` 直连。原始返回: ' + m);
-        }
-        throw new Error('HTTP ' + resp.status + ': ' + m);
-      }
-
-      const list = (data.data||[]).map(d=> d.url || d.b64_json).filter(Boolean);
-      if(!list.length){ throw new Error('接口返回为空,请检查模型是否支持图像生成,或更换 size / 提示词。'); }
-
-      const elapsed = ((Date.now()-t0)/1000).toFixed(1);
-      renderResults(list, {
-        prompt, model:modelEl.value, size:sizeEl.value, n:nVal, elapsed
-      });
-
-      const cur = parseInt(localStorage.getItem('sn_run_count')||'0',10) + 1;
-      try{ localStorage.setItem('sn_run_count', String(cur)); }catch(e){}
-      runCount.textContent = String(cur).padStart(3,'0');
-
-    }catch(err){
-      canvasBody.innerHTML = '';
-      // restore empty state
-      canvasBody.innerHTML = `
-        <div class="empty">
-          <div class="empty-art">
-            <div class="ring"></div><div class="ring r2"></div><div class="ring r3" style="border-color:var(--accent)"></div>
-            <div class="core" style="background:var(--accent)"></div>
-            <div class="core2"></div>
-            <div class="label" style="color:var(--accent)">FAILED</div>
-          </div>
-          <h2>这次没能成像。</h2>
-          <p>查看下方错误详情,确认 Key、模型、网络访问权限后重试。</p>
+        
+        <div class="main-grid">
+            <!-- Left Panel: Input -->
+            <div class="card">
+                <div class="card-title">
+                    <span class="icon">✏️</span>
+                    生成设置
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">提示词 Prompt</label>
+                    <textarea class="form-textarea" id="promptInput" placeholder="描述你想要生成的图像...&#10;&#10;例如：&#10;• 一只可爱的柴犬在樱花树下&#10;• 赛博朋克风格的城市夜景&#10;• 水墨画风格的山水风景"></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">图像尺寸</label>
+                    <div class="size-grid">
+                        <div class="size-item">
+                            <label class="size-label">宽度</label>
+                            <select class="form-select" id="widthSelect">
+                                <option value="2048">2048</option>
+                                <option value="2752">2752</option>
+                                <option value="1536">1536</option>
+                                <option value="1664">1664</option>
+                                <option value="2496">2496</option>
+                                <option value="1760">1760</option>
+                                <option value="2368">2368</option>
+                                <option value="1824">1824</option>
+                                <option value="2272">2272</option>
+                                <option value="3072">3072</option>
+                                <option value="1344">1344</option>
+                            </select>
+                        </div>
+                        <div class="size-item">
+                            <label class="size-label">高度</label>
+                            <select class="form-select" id="heightSelect">
+                                <option value="2048">2048</option>
+                                <option value="1536">1536</option>
+                                <option value="2752">2752</option>
+                                <option value="2496">2496</option>
+                                <option value="1664">1664</option>
+                                <option value="2368">2368</option>
+                                <option value="1760">1760</option>
+                                <option value="2272">2272</option>
+                                <option value="1824">1824</option>
+                                <option value="1376">1376</option>
+                                <option value="3136">3136</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="size-preview" id="sizePreview">2048 × 2048 (正方形)</div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">生成数量</label>
+                    <select class="form-select" id="nSelect">
+                        <option value="1">1 张</option>
+                        <option value="2">2 张</option>
+                        <option value="4">4 张</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">随机种子 (可选)</label>
+                    <input type="number" class="form-input" id="seedInput" placeholder="留空则随机生成">
+                </div>
+                
+                <button class="btn btn-primary" id="generateBtn" onclick="generateImage()">
+                    <span>✨</span>
+                    <span>开始生成</span>
+                </button>
+                <button class="btn btn-danger" id="cancelBtn" onclick="cancelGeneration()" style="display: none; margin-top: 10px;">
+                    <span>⏹️</span>
+                    <span>停止生成</span>
+                </button>
+                
+                <div class="status-message" id="statusMessage"></div>
+            </div>
+            
+            <!-- Right Panel: Output -->
+            <div class="card">
+                <div class="card-title">
+                    <span class="icon">🖼️</span>
+                    生成结果
+                </div>
+                
+                <div class="progress-steps">
+                    <div class="progress-step" data-step="1">
+                        <div class="step-icon">📝</div>
+                        <div class="step-label">准备</div>
+                    </div>
+                    <div class="progress-step" data-step="2">
+                        <div class="step-icon">⏳</div>
+                        <div class="step-label">生成中</div>
+                    </div>
+                    <div class="progress-step" data-step="3">
+                        <div class="step-icon">✅</div>
+                        <div class="step-label">完成</div>
+                    </div>
+                </div>
+                
+                <div class="image-container" id="imageContainer">
+                    <div class="loading" id="loading">
+                        <div class="scanline-loader" aria-hidden="true">
+                            <div class="scanline-meta">
+                                <span>POST /images</span>
+                                <span>U1</span>
+                            </div>
+                            <div class="scanline-core"></div>
+                            <div class="scanline-sweep"></div>
+                            <div class="scanline-label">HUD SCAN</div>
+                        </div>
+                        <div class="loading-text">正在调用 SenseNova U1 生成图像...</div>
+                    </div>
+                    <div class="placeholder" id="placeholder">
+                        <div class="placeholder-icon">🎨</div>
+                        <div class="placeholder-text">输入提示词开始创作</div>
+                        <div class="placeholder-subtext">AI 将为你生成独特的艺术作品</div>
+                    </div>
+                    <img id="resultImage" style="display: none;" alt="生成结果">
+                </div>
+                
+                <div class="image-actions" id="imageActions" style="display: none;">
+                    <button class="btn btn-secondary" onclick="downloadImage()">⬇️ 下载</button>
+                    <button class="btn btn-secondary" onclick="copyImage()">📋 复制链接</button>
+                    <button class="btn btn-secondary" onclick="regenerate()">🔄 重新生成</button>
+                    <button class="btn btn-primary" id="collectBtn" onclick="collectPrompt()" style="display: none; background: linear-gradient(135deg, #f59e0b, #f97316);">⭐ 收藏提示词</button>
+                </div>
+            </div>
         </div>
-      `;
-      const message = err.message || String(err);
-      if(/Failed to fetch/i.test(message)){
-        showError('网络请求失败: 通常是 CORS 或接口域名不支持浏览器直连。请确认 Base URL 为 `https://token.sensenova.cn/v1`；如果仍失败,就需要后端代理。');
-      }else{
-        showError(message);
-      }
-    }finally{
-      clearInterval(timer);
-      goBtn.disabled = false;
-      goBtn.querySelector('span').textContent = '开始生成';
-    }
-  }
-
-  goBtn.addEventListener('click', generate);
-  promptEl.addEventListener('keydown', (e)=>{
-    if((e.metaKey||e.ctrlKey) && e.key==='Enter'){ generate(); }
-  });
-})();
-</script>
+        
+        <!-- Prompt Collections Panel -->
+    <div class="card" style="margin-top: 25px;">
+        <div class="card-title">
+            <span class="icon">⭐</span>
+            提示词收藏
+        </div>
+        <div id="promptCollections">
+            <div style="text-align: center; color: var(--text-muted); padding: 40px;">
+                暂无收藏的提示词，生成满意后点击"收藏提示词"保存
+            </div>
+        </div>
+    </div>
+    
+    <!-- History Panel -->
+        <div class="card" style="margin-top: 25px;">
+            <div class="card-title">
+                <span class="icon">📜</span>
+                生成历史
+            </div>
+            <div class="history-list" id="historyList">
+                <div style="text-align: center; color: var(--text-muted); padding: 40px;">
+                    暂无历史记录，生成图像后会自动保存
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="footer">
+        <p>Powered by <a href="https://platform.sensenova.cn" target="_blank">SenseNova 日日新</a> · API: token.sensenova.cn/v1</p>
+        <p style="margin-top: 8px;">模型: sensenova-u1-fast · 支持 11 种 2K/4K 分辨率</p>
+    </div>
+    
+    <script>
+        // API Configuration (defaults, can be overridden by localStorage)
+        const DEFAULT_API_BASE = 'https://token.sensenova.cn/v1';
+        const DEFAULT_MODEL = 'sensenova-u1-fast';
+        
+        // Load from localStorage or use defaults
+        let API_BASE = localStorage.getItem('sensenova-api-base') || DEFAULT_API_BASE;
+        let API_KEY = localStorage.getItem('sensenova-api-key') || '';
+        const MODEL = localStorage.getItem('sensenova-model') || DEFAULT_MODEL;
+        
+        // Update config inputs on load
+        function loadConfigToInputs() {
+            const apiBaseInput = document.getElementById('configApiBase');
+            const apiKeyInput = document.getElementById('configApiKey');
+            if (apiBaseInput) apiBaseInput.value = API_BASE;
+            if (apiKeyInput) apiKeyInput.value = API_KEY;
+        }
+        
+        // Supported sizes (U1 支持的 11 种预设分辨率)
+        const SUPPORTED_SIZES = [
+            '2048x2048', '2752x1536', '1536x2752', '1664x2496', '2496x1664',
+            '1760x2368', '2368x1760', '1824x2272', '2272x1824', '3072x1376', '1344x3136'
+        ];
+        
+        // ========== Configuration Functions ==========
+        
+        // Toggle config panel
+        function toggleConfigPanel() {
+            const panel = document.getElementById('configPanel');
+            panel.classList.toggle('open');
+        }
+        
+        // Save configuration
+        function saveConfig() {
+            const apiBaseInput = document.getElementById('configApiBase');
+            const apiKeyInput = document.getElementById('configApiKey');
+            
+            const newApiBase = apiBaseInput.value.trim();
+            const newApiKey = apiKeyInput.value.trim();
+            
+            if (!newApiKey) {
+                alert('⚠️ API Key 不能为空！');
+                return;
+            }
+            
+            // Save to localStorage
+            if (newApiBase) {
+                localStorage.setItem('sensenova-api-base', newApiBase);
+                API_BASE = newApiBase;
+            }
+            localStorage.setItem('sensenova-api-key', newApiKey);
+            API_KEY = newApiKey;
+            
+            // Close panel and show success
+            document.getElementById('configPanel').classList.remove('open');
+            showStatus('✅ 配置已保存！现在可以生成图片了。', 'success');
+            
+            // Auto-check API status
+            checkApiStatus();
+        }
+        
+        // ========== State ==========
+        let currentImageData = null;
+        let currentPrompt = '';
+        let generationHistory = [];
+        let promptCollections = [];
+        let currentAbortController = null;
+        
+        // DOM Elements (will be initialized in init())
+        let promptInput, widthSelect, heightSelect, sizePreview, nSelect, seedInput;
+        let generateBtn, cancelBtn, collectBtn;
+        let imageContainer, placeholder, resultImage, loading, imageActions;
+        let statusMessage, progressSteps, historyList, apiStatus;
+        let promptCollectionsContainer;
+        
+        // Initialize
+        async function init() {
+            // Load config to inputs
+            loadConfigToInputs();
+            
+            // DOM Elements
+            promptInput = document.getElementById('promptInput');
+            widthSelect = document.getElementById('widthSelect');
+            heightSelect = document.getElementById('heightSelect');
+            sizePreview = document.getElementById('sizePreview');
+            nSelect = document.getElementById('nSelect');
+            seedInput = document.getElementById('seedInput');
+            generateBtn = document.getElementById('generateBtn');
+            cancelBtn = document.getElementById('cancelBtn');
+            collectBtn = document.getElementById('collectBtn');
+            imageContainer = document.getElementById('imageContainer');
+            placeholder = document.getElementById('placeholder');
+            resultImage = document.getElementById('resultImage');
+            loading = document.getElementById('loading');
+            imageActions = document.getElementById('imageActions');
+            statusMessage = document.getElementById('statusMessage');
+            progressSteps = document.getElementById('progressSteps');
+            historyList = document.getElementById('historyList');
+            apiStatus = document.getElementById('apiStatus');
+            promptCollectionsContainer = document.getElementById('promptCollections');
+            
+            // Update size preview
+            function updateSizePreview() {
+                if (!widthSelect || !heightSelect || !sizePreview) return;
+                const width = widthSelect.value;
+                const height = heightSelect.value;
+                const aspectRatio = width / height;
+                let aspectText = '';
+                
+                if (Math.abs(aspectRatio - 1) < 0.01) {
+                    aspectText = '正方形';
+                } else if (aspectRatio > 1.5) {
+                    aspectText = '横屏';
+                } else if (aspectRatio < 0.67) {
+                    aspectText = '竖屏';
+                } else {
+                    aspectText = aspectRatio > 1 ? '横屏' : '竖屏';
+                }
+                
+                sizePreview.textContent = `${width} × ${height} (${aspectText})`;
+            }
+            
+            // Add event listeners for size change
+            widthSelect.addEventListener('change', updateSizePreview);
+            heightSelect.addEventListener('change', updateSizePreview);
+            
+            // Initialize size preview
+            updateSizePreview();
+            
+            // Check if API_KEY is placeholder
+            if (API_KEY=*** 'YOUR_API_KEY_HERE' || API_KEY.length < 10) {
+                showStatus('⚠️ 请先配置 API Key！点击"⚙️ API 配置"输入您的密钥。', 'warning');
+                console.warn('API Key 未配置，请配置后再生成图片');
+            }
+            
+            // Load history from localStorage
+            const savedHistory = localStorage.getItem('sensenova-history');
+            if (savedHistory) {
+                generationHistory = JSON.parse(savedHistory);
+                renderHistory();
+            }
+            
+            // Load prompt collections from localStorage
+            const savedCollections = localStorage.getItem('sensenova-collections');
+            if (savedCollections) {
+                promptCollections = JSON.parse(savedCollections);
+                renderPromptCollections();
+            }
+            
+            // Check API connectivity (only if key is configured)
+            if (API_KEY && API_KEY.length >= 10) {
+                await checkApiStatus();
+            }
+        }
+        
+        // Check API Status
+        async function checkApiStatus() {
+            const statusEl = document.getElementById('apiStatus');
+            if (!statusEl) return;
+            
+            try {
+                const response = await fetch(`${API_BASE}/models`, {
+                    headers: {
+                        'Authorization': `Bearer ${API_KEY}`
+                    }
+                });
+                
+                if (response.ok) {
+                    statusEl.textContent = '● API 已连接';
+                    statusEl.style.color = 'var(--success)';
+                    statusEl.classList.add('connected');
+                } else {
+                    statusEl.textContent = '● API 连接失败';
+                    statusEl.style.color = 'var(--error)';
+                    statusEl.classList.add('error');
+                }
+            } catch (error) {
+                statusEl.textContent = '● 连接检查中...';
+                statusEl.style.color = 'var(--warning)';
+            }
+        }
+        
+        // Check API Status
+        function setProgressStep(step, active = false, done = false) {
+            const el = document.querySelector(`.progress-step[data-step="${step}"]`);
+            if (el) {
+                el.classList.toggle('active', active);
+                el.classList.toggle('completed', done);
+            }
+        }
+        
+        // Show Status Message
+        function showStatus(message, type = 'info') {
+            statusMessage.textContent = message;
+            statusMessage.className = 'status-message';
+            statusMessage.classList.add(`status-${type}`);
+        }
+        
+        // Hide Status Message
+        function hideStatus() {
+            statusMessage.className = 'status-message';
+        }
+        
+        // Generate Image
+        async function generateImage() {
+            const prompt = promptInput.value.trim();
+            
+            if (!prompt) {
+                showStatus('请输入提示词描述你想要生成的图像', 'error');
+                promptInput.focus();
+                return;
+            }
+            
+            // Parse size
+            const width = widthSelect.value;
+            const height = heightSelect.value;
+            const size = `${width}x${height}`;
+            
+            // Parse count
+            const n = parseInt(nSelect.value);
+            
+            // Parse seed
+            const seed = seedInput.value ? parseInt(seedInput.value) : undefined;
+            
+            // Update UI
+            generateBtn.disabled = true;
+            generateBtn.innerHTML = '<span>✨</span><span>开始生成</span>';
+            cancelBtn.style.display = 'inline-flex';
+            placeholder.style.display = 'none';
+            resultImage.style.display = 'none';
+            imageActions.style.display = 'none';
+            collectBtn.style.display = 'none';
+            loading.classList.add('active');
+            setProgressStep(1, true, false);
+            setProgressStep(2, true, false);
+            setProgressStep(3, false, false);
+            hideStatus();
+            
+            currentPrompt = prompt;
+            
+            // Create abort controller
+            currentAbortController = new AbortController();
+            const signal = currentAbortController.signal;
+            
+            try {
+                // Call SenseNova U1 API
+                const requestBody = {
+                    model: MODEL,
+                    prompt: prompt,
+                    n: n,
+                    size: size,
+                    response_format: 'url'
+                };
+                
+                if (seed !== undefined) {
+                    requestBody.seed = seed;
+                }
+                
+                const response = await fetch(`${API_BASE}/images/generations`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${API_KEY}`
+                    },
+                    body: JSON.stringify(requestBody),
+                    signal: signal
+                });
+                
+                console.log('API Response Status:', response.status);
+                console.log('API Response Headers:', response.headers);
+                
+                const data = await response.json();
+                console.log('API Response Data:', data);
+                
+                if (!response.ok) {
+                    const errorMsg = data.error?.message || data.message || `API 错误: ${response.status}`;
+                    throw new Error(errorMsg);
+                }
+                
+                // Handle response
+                if (data.data && data.data.length > 0) {
+                    // Use the first image
+                    const imageUrl = data.data[0].url;
+                    const revisedPrompt = data.data[0].revised_prompt || prompt;
+                    
+                    // Display image
+                    resultImage.src = imageUrl;
+                    resultImage.style.display = 'block';
+                    loading.classList.remove('active');
+                    imageContainer.classList.add('has-image');
+                    
+                    // Store image data
+                    currentImageData = {
+                        url: imageUrl,
+                        prompt: prompt,
+                        revisedPrompt: revisedPrompt,
+                        size: size,
+                        seed: seed,
+                        timestamp: Date.now()
+                    };
+                    
+                    // Update UI
+                    imageActions.style.display = 'flex';
+                    collectBtn.style.display = 'inline-flex';
+                    setProgressStep(1, false, true);
+                    setProgressStep(2, false, true);
+                    setProgressStep(3, true, true);
+                    showStatus(`✅ 生成成功！使用种子: ${seed || '随机'}`, 'success');
+                    
+                    // Add to history
+                    addToHistory(currentImageData);
+                } else {
+                    throw new Error('API 返回空结果');
+                }
+                
+            } catch (error) {
+                if (error.name === 'AbortError') {
+                    console.log('Generation cancelled by user');
+                    loading.classList.remove('active');
+                    placeholder.style.display = 'block';
+                    setProgressStep(1, false, false);
+                    setProgressStep(2, false, false);
+                    setProgressStep(3, false, false);
+                    showStatus('⏹️ 生成已取消', 'warning');
+                } else {
+                    console.error('Generation error:', error);
+                    loading.classList.remove('active');
+                    placeholder.style.display = 'block';
+                    setProgressStep(1, false, false);
+                    setProgressStep(2, false, false);
+                    setProgressStep(3, false, false);
+                    showStatus(`❌ 生成失败: ${error.message}`, 'error');
+                }
+            } finally {
+                generateBtn.disabled = false;
+                cancelBtn.style.display = 'none';
+                currentAbortController = null;
+            }
+        }
+        
+        // Cancel Generation
+        function cancelGeneration() {
+            if (currentAbortController) {
+                currentAbortController.abort();
+                showStatus('⏹️ 正在取消生成...', 'info');
+            }
+        }
+        
+        // Download Image
+        async function downloadImage() {
+            if (!currentImageData?.url) return;
+            
+            try {
+                const response = await fetch(currentImageData.url);
+                const blob = await response.blob();
+                const url = URL.createObjectURL(blob);
+                
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `sensenova-${Date.now()}.png`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                
+                showStatus('✅ 下载已开始', 'success');
+            } catch (error) {
+                showStatus(`❌ 下载失败: ${error.message}`, 'error');
+            }
+        }
+        
+        // Copy Image URL
+        async function copyImage() {
+            if (!currentImageData?.url) return;
+            
+            try {
+                await navigator.clipboard.writeText(currentImageData.url);
+                showStatus('✅ 链接已复制到剪贴板', 'success');
+            } catch (error) {
+                // Fallback
+                const textarea = document.createElement('textarea');
+                textarea.value = currentImageData.url;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                showStatus('✅ 链接已复制到剪贴板', 'success');
+            }
+        }
+        
+        // Regenerate
+        function regenerate() {
+            if (currentPrompt) {
+                promptInput.value = currentPrompt;
+                generateImage();
+            }
+        }
+        
+        // Add to History
+        function addToHistory(imageData) {
+            // Create history item
+            const item = {
+                url: imageData.url,
+                prompt: imageData.prompt,
+                size: imageData.size,
+                timestamp: imageData.timestamp
+            };
+            
+            // Add to beginning
+            generationHistory.unshift(item);
+            
+            // Keep only last 20
+            if (generationHistory.length > 20) {
+                generationHistory = generationHistory.slice(0, 20);
+            }
+            
+            // Save to localStorage
+            localStorage.setItem('sensenova-history', JSON.stringify(generationHistory));
+            
+            // Render
+            renderHistory();
+        }
+        
+        // Render History
+        function renderHistory() {
+            if (generationHistory.length === 0) {
+                historyList.innerHTML = `
+                    <div style="text-align: center; color: var(--text-muted); padding: 40px;">
+                        暂无历史记录，生成图像后会自动保存
+                    </div>
+                `;
+                return;
+            }
+            
+            historyList.innerHTML = generationHistory.map((item, index) => `
+                <div class="history-item">
+                    <img class="history-thumb" src="${item.url}" alt="预览" loading="lazy">
+                    <div class="history-info" onclick="loadHistory(${index})">
+                        <div class="history-prompt">${escapeHtml(item.prompt)}</div>
+                        <div class="history-time">${formatTime(item.timestamp)} · ${item.size}</div>
+                    </div>
+                    <button class="btn-icon delete" onclick="event.stopPropagation(); deleteHistory(${index})" title="删除">🗑️</button>
+                </div>
+            `).join('');
+        }
+        
+        // ========== Prompt Collections ==========
+        
+        // Delete History Item
+        function deleteHistory(index) {
+            if (!confirm('确定要删除这条历史记录吗？')) return;
+            
+            generationHistory.splice(index, 1);
+            localStorage.setItem('sensenova-history', JSON.stringify(generationHistory));
+            renderHistory();
+            
+            showStatus('🗑️ 已删除历史记录', 'info');
+        }
+        
+        // ========== Prompt Collections ==========
+        
+        // Collect Current Prompt
+        function collectPrompt() {
+            if (!currentPrompt || !currentImageData) {
+                showStatus('❌ 暂无可收藏的提示词', 'error');
+                return;
+            }
+            
+            // Check if already collected
+            const exists = promptCollections.find(c => c.prompt === currentPrompt);
+            if (exists) {
+                showStatus('⚠️ 该提示词已收藏', 'warning');
+                return;
+            }
+            
+            // Add to collections
+            const collection = {
+                prompt: currentPrompt,
+                size: currentImageData.size,
+                seed: currentImageData.seed,
+                imageUrl: currentImageData.url,
+                collectedAt: Date.now()
+            };
+            
+            promptCollections.unshift(collection);
+            
+            // Keep only last 50
+            if (promptCollections.length > 50) {
+                promptCollections = promptCollections.slice(0, 50);
+            }
+            
+            // Save to localStorage
+            localStorage.setItem('sensenova-collections', JSON.stringify(promptCollections));
+            
+            // Render
+            renderPromptCollections();
+            
+            showStatus('⭐ 提示词已收藏！', 'success');
+        }
+        
+        // Render Prompt Collections
+        function renderPromptCollections() {
+            if (!promptCollectionsContainer) return;
+            
+            if (promptCollections.length === 0) {
+                promptCollectionsContainer.innerHTML = `
+                    <div style="text-align: center; color: var(--text-muted); padding: 40px;">
+                        暂无收藏的提示词，生成满意后点击"收藏提示词"保存
+                    </div>
+                `;
+                return;
+            }
+            
+            promptCollectionsContainer.innerHTML = `
+                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px;">
+                    ${promptCollections.map((item, index) => `
+                        <div class="collection-item">
+                            <div class="collection-header">
+                                <span class="collection-title">${escapeHtml(item.prompt.substring(0, 40))}${item.prompt.length > 40 ? '...' : ''}</span>
+                                <div class="collection-actions">
+                                    <button class="btn-icon" onclick="loadCollection(${index})" title="使用">📝</button>
+                                    <button class="btn-icon" onclick="deleteCollection(${index})" title="删除">🗑️</button>
+                                </div>
+                            </div>
+                            <div class="collection-meta">
+                                <span>${item.size}</span>
+                                <span>${formatTime(item.collectedAt)}</span>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+        
+        // Load Collection
+        function loadCollection(index) {
+            const item = promptCollections[index];
+            if (!item) return;
+            
+            promptInput.value = item.prompt;
+            // Parse size and set width/height
+            if (item.size) {
+                const [w, h] = item.size.split('x').map(Number);
+                widthSelect.value = w;
+                heightSelect.value = h;
+                updateSizePreview();
+            }
+            
+            // Scroll to top
+            document.querySelector('.card').scrollIntoView({ behavior: 'smooth' });
+            
+            showStatus(`📝 已加载提示词: "${item.prompt.substring(0, 30)}..."`, 'info');
+        }
+        
+        // Delete Collection
+        function deleteCollection(index) {
+            if (!confirm('确定要删除这个收藏的提示词吗？')) return;
+            
+            promptCollections.splice(index, 1);
+            localStorage.setItem('sensenova-collections', JSON.stringify(promptCollections));
+            renderPromptCollections();
+            
+            showStatus('🗑️ 已删除收藏', 'info');
+        }
+        
+        // Load History Item
+        function loadHistory(index) {
+            const item = generationHistory[index];
+            if (!item) return;
+            
+            promptInput.value = item.prompt;
+            resultImage.src = item.url;
+            resultImage.style.display = 'block';
+            placeholder.style.display = 'none';
+            imageContainer.classList.add('has-image');
+            imageActions.style.display = 'flex';
+            
+            // Set size
+            if (item.size) {
+                const [w, h] = item.size.split('x').map(Number);
+                widthSelect.value = w;
+                heightSelect.value = h;
+                updateSizePreview();
+            }
+            
+            currentImageData = item;
+            currentPrompt = item.prompt;
+        }
+        
+        // Utility Functions
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        function formatTime(timestamp) {
+            const date = new Date(timestamp);
+            const now = new Date();
+            const diff = now - date;
+            
+            if (diff < 60000) return '刚刚';
+            if (diff < 3600000) return `${Math.floor(diff / 60000)} 分钟前`;
+            if (diff < 86400000) return `${Math.floor(diff / 3600000)} 小时前`;
+            
+            return date.toLocaleDateString('zh-CN');
+        }
+        
+        // Initialize on load
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
 </body>
 </html>
