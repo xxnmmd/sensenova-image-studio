@@ -447,7 +447,10 @@
     apiKeyEl.value = localStorage.getItem('sn_api_key') || '';
     const savedBase = localStorage.getItem('sn_base_url');
     if(savedBase && savedBase !== 'https://token.sensenova.cn/v1') baseUrlEl.value = savedBase;
-    if(savedBase === 'https://token.sensenova.cn/v1') localStorage.setItem('sn_base_url', 'https://api.sensenova.cn/v1');
+    if(savedBase === 'https://token.sensenova.cn/v1') {
+      baseUrlEl.value = 'https://api.sensenova.cn/v1';
+      localStorage.setItem('sn_base_url', 'https://api.sensenova.cn/v1');
+    }
     const savedRun = parseInt(localStorage.getItem('sn_run_count')||'0',10);
     runCount.textContent = String(savedRun).padStart(3,'0');
   }catch(e){}
